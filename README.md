@@ -123,6 +123,7 @@ bistro-verdadeiro/
 ├── dados.php              a base inteira, com filtros, ordenação e paginação
 ├── analises.php           medidas sobre a base filtrada ou sobre valores digitados
 ├── graficos.php           barras, histograma e dispersão sobre o mesmo recorte
+├── upload.php             envio de CSV, lançamento manual e volta ao original
 ├── sair.php               encerra a sessão
 ├── config/
 │   └── config.php         usuários, papéis, tempos de sessão, listas de permissão
@@ -131,6 +132,7 @@ bistro-verdadeiro/
 │   ├── dados.php          forma da base, leitura, validação e filtros
 │   ├── estatistica.php    medidas estatísticas e leitura de números digitados
 │   ├── grafico.php        gráficos em SVG, gerados no PHP (sem JS, sem biblioteca)
+│   ├── importacao.php     leitura e conferência do CSV enviado
 │   ├── tentativas.php     contador de tentativas de login, em arquivo
 │   ├── mineracao.php      ponte PHP -> shell script (com plano B em PHP)
 │   ├── topo.php           cabeçalho HTML das páginas internas
@@ -165,6 +167,29 @@ ranking). `-j` devolve JSON em vez de texto.
 O arquivo precisa continuar com quebras de linha Unix (LF). Se for editado no
 Windows e salvo como CRLF, o bash falha com um erro de `\r`.
 
+## A base ativa e o envio de dados
+
+`dados/gorjetas.csv` é a **semente**: versionada, e o sistema nunca escreve
+nela. Na primeira leitura ele copia esse arquivo para `var/gorjetas-ativa.csv`
+e passa a trabalhar sobre a cópia — é ela que recebe o que for enviado, e é ela
+que o shell script lê. Por isso o repositório não fica sujo a cada venda
+lançada, e o botão *Restaurar a base original* sempre tem para onde voltar.
+
+O envio acontece em dois passos. O primeiro lê o arquivo e confere linha por
+linha contra `COLUNAS_BASE`; o segundo grava. Entre os dois, a tela mostra a
+tabela do que foi entendido e a lista das linhas recusadas com o motivo de cada
+uma. O arquivo enviado **não é gravado em lugar nenhum**: ele é lido do
+temporário do PHP e descartado, e o que entra na base são registros montados
+pelo validador, não o conteúdo do arquivo. Com isso não existe arquivo de
+usuário dentro da pasta servida pelo Apache.
+
+Aceita vírgula, ponto-e-vírgula ou tabulação como separador (descobre sozinho),
+arquivo com ou sem cabeçalho, nomes de coluna em português, valores em
+português (`Sábado`, `Almoço`, `Mulher`, `Sim`) e decimal com vírgula. O que
+fica gravado é sempre o valor canônico da lista.
+
+Só o papel **gerente** envia dados.
+
 ## O que a parte de segurança da sessão cobre
 
 - `session.use_strict_mode`, cookie `HttpOnly` e `SameSite=Lax`.
@@ -177,6 +202,10 @@ Windows e salvo como CRLF, o bash falha com um erro de `\r`.
 - Toda saída passa por `htmlspecialchars()` antes de ir para o HTML.
 - A chamada ao shell usa lista de permissão para operação/filtros e
   `escapeshellarg()` em cada argumento, então nada vindo da URL vira comando.
+- O arquivo enviado é conferido com `is_uploaded_file()`, tem teto de tamanho e
+  de linhas conferido no servidor, e nunca é escrito em disco.
+- A escrita na base acontece sob `flock()` exclusivo, e a contagem do teto é
+  feita de dentro da trava, pelo mesmo descritor.
 
 ### Bloqueio de tentativas de login
 

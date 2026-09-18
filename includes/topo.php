@@ -57,6 +57,9 @@ $analise     = (string) array_key_first(operacoes_permitidas());
             <?php if (pode('ver_dados')): ?>
                 <a href="dados.php"<?= $paginaAtual === 'dados.php' ? ' aria-current="page"' : '' ?>>Dados</a>
             <?php endif; ?>
+            <?php if (pode('enviar_dados')): ?>
+                <a href="upload.php"<?= $paginaAtual === 'upload.php' ? ' aria-current="page"' : '' ?>>Enviar dados</a>
+            <?php endif; ?>
             <?php if (pode('ver_base')): ?>
                 <a href="base.php"<?= $paginaAtual === 'base.php' ? ' aria-current="page"' : '' ?>>Base de dados</a>
             <?php endif; ?>

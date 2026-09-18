@@ -162,8 +162,13 @@ code {
     margin: 0 auto;
     padding: 0 1.5rem;
     display: flex;
+    flex-wrap: wrap;
     gap: .35rem;
 }
+
+/* Com sete seções o menu chega a estreitar; que ele quebre entre os itens,
+   e não no meio do nome de um deles. */
+.menu-topo a { white-space: nowrap; }
 
 .menu-topo a {
     position: relative;
@@ -1024,3 +1029,89 @@ a.ordenavel:hover { color: var(--latao); text-decoration: underline; }
 }
 
 .tabela-equivalente .tabela { margin-top: .8rem; max-width: 34rem; }
+
+/* --- Envio de dados ------------------------------------------------------- */
+
+.envio {
+    margin: 1.2rem 0 2rem;
+    padding: 1.2rem 1.3rem;
+    background: var(--papel-quente);
+    border: 1px solid var(--linha);
+    border-radius: var(--raio-g);
+    max-width: 44rem;
+}
+
+.envio label {
+    display: block;
+    font-size: .8rem;
+    color: var(--tinta-suave);
+    margin-bottom: .4rem;
+    letter-spacing: .02em;
+}
+
+.envio input[type="file"] {
+    font: inherit;
+    font-size: .92rem;
+    width: 100%;
+    padding: .55rem;
+    background: var(--papel);
+    border: 1px dashed #c4c0b0;
+    border-radius: var(--raio);
+    cursor: pointer;
+}
+
+.envio .botao { margin-top: 1rem; }
+
+.acoes-previa {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .7rem;
+    margin: 1.3rem 0 0;
+}
+
+.acoes-previa form { margin: 0; }
+
+.botao-cuidado { background: var(--vinho); }
+.botao-cuidado:hover:not(:disabled) { background: #93343e; }
+
+.recusadas {
+    margin: 1.2rem 0 0;
+    padding: 1rem 1.2rem;
+    background: rgba(122, 43, 52, .06);
+    border: 1px solid var(--vinho);
+    border-radius: var(--raio-g);
+}
+
+.recusadas h3 {
+    margin: 0 0 .6rem;
+    font-family: var(--serifada);
+    font-weight: 400;
+    font-size: 1.05rem;
+}
+
+.recusadas ul {
+    margin: 0;
+    padding-left: 1.2rem;
+    display: grid;
+    gap: .35rem;
+    font-size: .92rem;
+    max-height: 18rem;
+    overflow-y: auto;
+}
+
+.recusada-linha {
+    font-family: var(--mono);
+    font-size: .82rem;
+    color: var(--vinho);
+    margin-right: .4rem;
+}
+
+.recusadas .nota { margin-top: .9rem; }
+
+h3 {
+    font-family: var(--serifada);
+    font-weight: 400;
+    font-size: 1.12rem;
+    margin: 2rem 0 .6rem;
+}
