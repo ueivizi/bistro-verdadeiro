@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-require_once __DIR__ . '/sessao.php';
+require_once __DIR__ . '/dados.php';
 
 function shell_disponivel(): bool
 {
@@ -21,18 +21,6 @@ function shell_disponivel(): bool
     $teste = @shell_exec('bash -c "echo ok" 2>&1');
 
     return $disponivel = (is_string($teste) && trim($teste) === 'ok');
-}
-
-function caminho_da_base(): string
-{
-    $arquivo = realpath(ARQUIVO_DADOS);
-    $pasta   = realpath(PASTA_DADOS);
-
-    if ($arquivo === false || $pasta === false || !str_starts_with($arquivo, $pasta)) {
-        throw new RuntimeException('Base de dados não encontrada em dados/gorjetas.csv.');
-    }
-
-    return $arquivo;
 }
 
 function minerar(string $operacao, string $dia = '', string $periodo = '', int $limite = 10): array
@@ -103,46 +91,28 @@ function minerar(string $operacao, string $dia = '', string $periodo = '', int $
     ];
 }
 
+/**
+ * Mesma leitura de includes/dados.php, devolvida com os nomes em português que
+ * as telas de mineração já usavam desde o começo.
+ */
 function ler_registros(string $arquivo, string $dia, string $periodo): array
 {
+    $filtros = normalizar_filtros(['day' => $dia, 'time' => $periodo]);
+
     $registros = [];
-    $handle    = fopen($arquivo, 'r');
 
-    if ($handle === false) {
-        throw new RuntimeException('Não foi possível abrir a base de dados.');
-    }
-
-    fgetcsv($handle, 0, ',', '"', '');
-
-    while (($linha = fgetcsv($handle, 0, ',', '"', '')) !== false) {
-        if (count($linha) < 7 || (float) $linha[0] <= 0) {
-            continue;
-        }
-
-        if ($dia !== '' && $linha[4] !== $dia) {
-            continue;
-        }
-
-        if ($periodo !== '' && $linha[5] !== $periodo) {
-            continue;
-        }
-
-        $conta   = (float) $linha[0];
-        $gorjeta = (float) $linha[1];
-
+    foreach (filtrar_registros(ler_base($arquivo), $filtros) as $r) {
         $registros[] = [
-            'conta'      => $conta,
-            'gorjeta'    => $gorjeta,
-            'sexo'       => $linha[2],
-            'fumante'    => $linha[3],
-            'dia'        => $linha[4],
-            'periodo'    => $linha[5],
-            'pessoas'    => (int) $linha[6],
-            'percentual' => round($gorjeta / $conta * 100, 2),
+            'conta'      => $r['total_bill'],
+            'gorjeta'    => $r['tip'],
+            'sexo'       => $r['sex'],
+            'fumante'    => $r['smoker'],
+            'dia'        => $r['day'],
+            'periodo'    => $r['time'],
+            'pessoas'    => $r['size'],
+            'percentual' => $r['percentual'],
         ];
     }
-
-    fclose($handle);
 
     return $registros;
 }

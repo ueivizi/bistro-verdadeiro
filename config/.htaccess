@@ -1,0 +1,3 @@
+# Pasta de uso interno: só o PHP lê estes arquivos, do disco.
+# Nenhuma URL precisa chegar aqui.
+Require all denied

@@ -1,0 +1,4 @@
+# O bash recusa o script se ele vier com quebra de linha do Windows: falha com
+# erro de '\r'. Trava a terminação em LF para o clone no Windows não quebrar.
+* text=auto
+*.sh text eol=lf

@@ -48,6 +48,9 @@ $analise     = (string) array_key_first(operacoes_permitidas());
         <div class="menu-topo-conteudo">
             <a href="menu.php"<?= $paginaAtual === 'menu.php' ? ' aria-current="page"' : '' ?>>Início</a>
             <a href="gorjetas.php?op=<?= h(urlencode($analise)) ?>"<?= $paginaAtual === 'gorjetas.php' ? ' aria-current="page"' : '' ?>>Mineração</a>
+            <?php if (pode('ver_dados')): ?>
+                <a href="dados.php"<?= $paginaAtual === 'dados.php' ? ' aria-current="page"' : '' ?>>Dados</a>
+            <?php endif; ?>
             <?php if (pode('ver_base')): ?>
                 <a href="base.php"<?= $paginaAtual === 'base.php' ? ' aria-current="page"' : '' ?>>Base de dados</a>
             <?php endif; ?>
