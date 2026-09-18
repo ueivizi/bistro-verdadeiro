@@ -70,6 +70,11 @@ const OPERACOES = [
     'resumo'     => 'Resumo estatístico da base',
 ];
 
+// Caminho do bash que roda scripts/mineracao.sh. Vazio deixa o sistema
+// procurar sozinho: primeiro o Git Bash pelo caminho de instalação, depois o
+// PATH. Preencha só se o bash desta máquina estiver fora do lugar de sempre.
+const CAMINHO_BASH = '';
+
 const DIAS_VALIDOS     = ['Thur', 'Fri', 'Sat', 'Sun'];
 const PERIODOS_VALIDOS = ['Lunch', 'Dinner'];
 const SEXOS_VALIDOS    = ['Male', 'Female'];

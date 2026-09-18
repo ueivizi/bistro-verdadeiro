@@ -6,6 +6,8 @@ a maior gorjeta de um bistrô através de um shell script.
 
 O PHP nunca calcula a mineração — ele só chama o script em `scripts/mineracao.sh`
 e formata o que volta. Quem lê o CSV, filtra e ordena é o shell, com `awk` e `sort`.
+A saída crua do script fica à mostra na própria tela, junto do comando que a
+gerou, para dar para conferir que a conta veio mesmo de lá.
 
 ### Linux ou macOS
 
@@ -18,18 +20,34 @@ Abra `http://localhost:8080` no navegador.
 
 ### Windows
 
-O sistema chama o shell script pelo `bash`. No Windows isso funciona com o
-**Git Bash** instalado e com o `bash` disponível no PATH, ou rodando dentro do
-**WSL**.
+O sistema chama o shell script pelo `bash`. Instale o **Git Bash** — e é só isso:
+o caminho de instalação é procurado direto, sem depender do PATH.
 
-Se o `bash` não estiver disponível, o sistema **não trava**: ele percebe e
-refaz os mesmos cálculos direto em PHP, avisando na tela que está usando o
-caminho alternativo. Mas o shell script é a parte que a atividade pede, então
-vale instalar o Git Bash (se tu tiver no Windows) ou rodar no linux terminal direto, para ver ele rodando de verdade.
+Confiar no PATH não funcionaria. O Windows traz um `bash.exe` em
+`C:\Windows\System32` que é o lançador do WSL, e ele vem **antes** do Git na
+lista. Sem uma distro instalada, esse `bash` responde
 
-Depois de instalar o Git Bash, acrescente `C:\Program Files\Git\bin` ao PATH do
-usuário. Programas já abertos não enxergam a mudança: feche e reabra o terminal
-(ou o XAMPP Control Panel) antes de testar.
+```
+execvpe(/bin/bash) failed: No such file or directory
+```
+
+e o sistema concluiria que não há shell nenhum — caindo no plano B em PHP com o
+Git Bash instalado do lado. Por isso a procura é, nesta ordem:
+
+```
+%ProgramFiles%\Git\bin\bash.exe
+%ProgramFiles%\Git\usr\bin\bash.exe
+...
+bash            (o PATH, que é o caminho certo no Linux e no macOS)
+```
+
+Cada candidato só é aceito depois de responder a um `echo ok`; existir no disco
+não basta. Se o seu bash estiver fora desses lugares, preencha `CAMINHO_BASH`
+em `config/config.php`.
+
+Se nenhum responder o sistema **não trava**: refaz os mesmos cálculos em PHP e
+avisa na tela, listando onde procurou. A tela de mineração mostra um selo
+dizendo se o resultado veio do `bash` ou do plano B.
 
 ### Rodando no XAMPP sem copiar nada
 

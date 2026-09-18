@@ -4,23 +4,111 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/dados.php';
 
-function shell_disponivel(): bool
+/**
+ * Descobre por qual bash o script deve rodar.
+ *
+ * Chamar 'bash' e confiar no PATH não serve no Windows: o lançador do WSL mora
+ * em C:\Windows\System32 e vem antes do Git na lista, então 'bash' resolve
+ * para ele. Sem distro instalada, o WSL responde
+ *
+ *   execvpe(/bin/bash) failed: No such file or directory
+ *
+ * e o sistema concluiria que não há shell nenhum — caindo no plano B em PHP com
+ * o Git Bash instalado do lado, sem ninguém entender o porquê. Por isso o Git
+ * Bash é procurado pelo caminho, antes de tentar o PATH.
+ *
+ * Devolve o caminho do bash que respondeu, ou null se nenhum respondeu.
+ */
+function caminho_do_bash(): ?string
 {
-    static $disponivel = null;
+    static $resolvido = null;
+    static $procurado = false;
 
-    if ($disponivel !== null) {
-        return $disponivel;
+    if ($procurado) {
+        return $resolvido;
     }
 
+    $procurado  = true;
     $desligadas = array_map('trim', explode(',', (string) ini_get('disable_functions')));
 
     if (!function_exists('shell_exec') || in_array('shell_exec', $desligadas, true)) {
-        return $disponivel = false;
+        return $resolvido = null;
     }
 
-    $teste = @shell_exec('bash -c "echo ok" 2>&1');
+    foreach (candidatos_de_bash() as $candidato) {
+        if (bash_responde($candidato)) {
+            return $resolvido = $candidato;
+        }
+    }
 
-    return $disponivel = (is_string($teste) && trim($teste) === 'ok');
+    return $resolvido = null;
+}
+
+/** Onde procurar, em ordem de preferência. */
+function candidatos_de_bash(): array
+{
+    $lista = [];
+
+    if (CAMINHO_BASH !== '') {
+        $lista[] = CAMINHO_BASH;
+    }
+
+    if (DIRECTORY_SEPARATOR === '\\') {
+        $raizes = [
+            getenv('ProgramW6432'),
+            getenv('ProgramFiles'),
+            getenv('ProgramFiles(x86)'),
+            'C:\\Program Files',
+            'C:\\Program Files (x86)',
+        ];
+
+        foreach ($raizes as $raiz) {
+            if (!is_string($raiz) || $raiz === '') {
+                continue;
+            }
+
+            $raiz    = rtrim($raiz, '\\');
+            $lista[] = $raiz . '\\Git\\bin\\bash.exe';
+            $lista[] = $raiz . '\\Git\\usr\\bin\\bash.exe';
+        }
+    }
+
+    // Por último o PATH, que é o caminho certo no Linux e no macOS.
+    $lista[] = 'bash';
+
+    return array_values(array_unique($lista));
+}
+
+/** Só aceita um bash que responda de verdade, não um que apenas exista. */
+function bash_responde(string $caminho): bool
+{
+    if ($caminho !== 'bash' && !is_file($caminho)) {
+        return false;
+    }
+
+    $saida = @shell_exec(
+        escapeshellarg($caminho) . ' -c ' . escapeshellarg('echo ok') . ' 2>&1'
+    );
+
+    return is_string($saida) && trim($saida) === 'ok';
+}
+
+function shell_disponivel(): bool
+{
+    return caminho_do_bash() !== null;
+}
+
+/** Texto que explica por que o plano B em PHP entrou em cena. */
+function explicacao_do_plano_b(): string
+{
+    $procurados = implode("\n  ", candidatos_de_bash());
+
+    return "Nenhum bash respondeu, então os mesmos cálculos foram refeitos em PHP\n"
+         . "para a tela não quebrar. O resultado é o mesmo; o que falta é o script.\n\n"
+         . "Procurei nesta ordem:\n  " . $procurados . "\n\n"
+         . "No Windows, instale o Git Bash — ele é encontrado pelo caminho de\n"
+         . "instalação, sem depender do PATH. Se ele estiver em outro lugar,\n"
+         . "aponte o caminho em CAMINHO_BASH, dentro de config/config.php.";
 }
 
 function minerar(string $operacao, string $dia = '', string $periodo = '', int $limite = 10): array
@@ -53,7 +141,7 @@ function minerar(string $operacao, string $dia = '', string $periodo = '', int $
     }
 
     $partes = [
-        'bash',
+        escapeshellarg((string) caminho_do_bash()),
         escapeshellarg(SCRIPT_MINERACAO),
         '-a', escapeshellarg($base),
         '-o', escapeshellarg($operacao),
