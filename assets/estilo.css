@@ -869,3 +869,118 @@ a.ordenavel:hover { color: var(--latao); text-decoration: underline; }
     padding: .05rem .4rem;
     white-space: nowrap;
 }
+
+/* --- Dispersão e o passo a passo do cálculo ------------------------------ */
+
+.base-calculo {
+    border: 1px solid var(--linha);
+    border-radius: var(--raio-g);
+    background: var(--papel-quente);
+    padding: .9rem 1.2rem 1.1rem;
+    margin: 0 0 1.2rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+    gap: .8rem;
+}
+
+.base-calculo > legend {
+    padding: 0;
+    font-size: .8rem;
+    color: var(--tinta-suave);
+    letter-spacing: .02em;
+}
+
+.base-calculo label {
+    display: flex;
+    align-items: start;
+    gap: .6rem;
+    cursor: pointer;
+}
+
+.base-calculo input { margin-top: .3rem; flex: 0 0 auto; }
+.base-calculo strong { display: block; font-size: .96rem; font-weight: 600; }
+
+.base-calculo small {
+    display: block;
+    color: var(--tinta-suave);
+    font-size: .82rem;
+    line-height: 1.4;
+}
+
+.medidas-destaque {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
+    gap: 1rem;
+    margin: 1.6rem 0 1rem;
+}
+
+.medidas-destaque .medida-destaque { margin: 0; }
+
+.medida-secundaria {
+    background: var(--papel);
+    color: var(--tinta);
+    border: 1px solid var(--linha);
+    box-shadow: var(--sombra);
+}
+
+.medida-secundaria .medida-rotulo { color: var(--latao); }
+.medida-secundaria .medida-valor  { color: var(--vinho); }
+.medida-secundaria .medida-legenda { color: var(--tinta-suave); opacity: 1; }
+
+.conta-passos {
+    background: var(--papel-quente);
+    border: 1px solid var(--linha);
+    border-radius: var(--raio-g);
+    padding: 1.2rem 1.4rem;
+    margin: 1.2rem 0 0;
+}
+
+.conta-formula {
+    margin: 0 0 1rem;
+    font-family: var(--serifada);
+    font-size: 1.35rem;
+    color: var(--verde);
+    text-align: center;
+    letter-spacing: .02em;
+}
+
+/* display:flex no <li> tira dele o display:list-item e o marcador some junto.
+   A numeração dos passos é metade do recado aqui, então ela volta por contador
+   e entra colada no rótulo, onde alinha melhor que um marcador solto. */
+.conta-lista {
+    margin: 0;
+    padding-left: 0;
+    list-style: none;
+    counter-reset: passo;
+}
+
+.conta-lista li {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: .6rem;
+    margin-bottom: .55rem;
+    padding-bottom: .5rem;
+    border-bottom: 1px solid var(--linha);
+}
+
+.conta-lista li { counter-increment: passo; }
+.conta-lista li:last-child { border-bottom: 0; padding-bottom: 0; margin-bottom: 0; }
+
+.conta-rotulo::before {
+    content: counter(passo) ". ";
+    color: var(--latao);
+    font-weight: 600;
+}
+
+.conta-rotulo { color: var(--tinta-suave); font-size: .92rem; flex: 1 1 14rem; }
+
+.conta-valor {
+    font-family: var(--mono);
+    font-size: 1rem;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.conta-valor.forte { color: var(--vinho); font-weight: 600; font-size: 1.15rem; }
