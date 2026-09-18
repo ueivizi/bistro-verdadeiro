@@ -227,3 +227,153 @@ function medidas_de_posicao(array $serie): ?array
         'amplitude' => max($serie) - min($serie),
     ];
 }
+
+// ---------------------------------------------------------------------------
+// Medidas de dispersão
+// ---------------------------------------------------------------------------
+
+/**
+ * Percentil por interpolação linear, a mesma conta que Excel e numpy fazem por
+ * padrão. Série de um valor só devolve esse valor.
+ */
+function percentil_da_serie(array $serie, float $p): ?float
+{
+    $total = count($serie);
+
+    if ($total === 0) {
+        return null;
+    }
+
+    sort($serie);
+
+    if ($total === 1) {
+        return $serie[0];
+    }
+
+    $posicao = ($total - 1) * $p;
+    $abaixo  = (int) floor($posicao);
+    $acima   = (int) ceil($posicao);
+
+    if ($abaixo === $acima) {
+        return $serie[$abaixo];
+    }
+
+    return $serie[$abaixo] + ($posicao - $abaixo) * ($serie[$acima] - $serie[$abaixo]);
+}
+
+/**
+ * Soma dos quadrados dos desvios em relação à média.
+ *
+ * Em duas passadas — média primeiro, desvios depois. A forma de uma passada só
+ * (média dos quadrados menos quadrado da média) é mais curta e perde precisão
+ * quando os valores são grandes e próximos entre si.
+ */
+function soma_dos_quadrados(array $serie): ?float
+{
+    $media = media_da_serie($serie);
+
+    if ($media === null) {
+        return null;
+    }
+
+    $soma = 0.0;
+
+    foreach ($serie as $valor) {
+        $desvio = $valor - $media;
+        $soma  += $desvio * $desvio;
+    }
+
+    return $soma;
+}
+
+/**
+ * Variância.
+ *
+ * $amostral true divide por n-1 (correção de Bessel), que é o certo quando a
+ * série é uma amostra de algo maior — o caso dos atendimentos anotados pelo
+ * garçom. false divide por n, para quando a série É a população inteira.
+ *
+ * Devolve null quando não há valores suficientes: a variância amostral de um
+ * único valor não existe, e devolver zero seria afirmar que não há dispersão.
+ */
+function variancia_da_serie(array $serie, bool $amostral = true): ?float
+{
+    $total   = count($serie);
+    $divisor = $amostral ? $total - 1 : $total;
+
+    if ($total === 0 || $divisor <= 0) {
+        return null;
+    }
+
+    $quadrados = soma_dos_quadrados($serie);
+
+    return $quadrados === null ? null : $quadrados / $divisor;
+}
+
+function desvio_padrao_da_serie(array $serie, bool $amostral = true): ?float
+{
+    $variancia = variancia_da_serie($serie, $amostral);
+
+    return $variancia === null ? null : sqrt($variancia);
+}
+
+/**
+ * Coeficiente de variação: o desvio em porcentagem da média. Serve para
+ * comparar a dispersão de séries em unidades diferentes.
+ *
+ * Só faz sentido com média positiva. Média zero ou negativa devolve null em
+ * vez de um número que pareceria válido e não seria.
+ */
+function coeficiente_de_variacao(array $serie, bool $amostral = true): ?float
+{
+    $media  = media_da_serie($serie);
+    $desvio = desvio_padrao_da_serie($serie, $amostral);
+
+    if ($media === null || $desvio === null || $media <= 0.0) {
+        return null;
+    }
+
+    return $desvio / $media * 100;
+}
+
+/** Erro padrão da média: quanto a média da amostra tende a oscilar. */
+function erro_padrao_da_media(array $serie, bool $amostral = true): ?float
+{
+    $desvio = desvio_padrao_da_serie($serie, $amostral);
+    $total  = count($serie);
+
+    return ($desvio === null || $total === 0) ? null : $desvio / sqrt($total);
+}
+
+/**
+ * Todas as medidas de dispersão, com os números intermediários do cálculo —
+ * a soma dos quadrados e o divisor — para a tela poder mostrar a conta feita
+ * e não só o resultado.
+ */
+function medidas_de_dispersao(array $serie, bool $amostral = true): ?array
+{
+    $total = count($serie);
+
+    if ($total === 0) {
+        return null;
+    }
+
+    $q1 = percentil_da_serie($serie, 0.25);
+    $q3 = percentil_da_serie($serie, 0.75);
+
+    return [
+        'contagem'       => $total,
+        'amostral'       => $amostral,
+        'media'          => media_da_serie($serie),
+        'soma_quadrados' => soma_dos_quadrados($serie),
+        'divisor'        => $amostral ? $total - 1 : $total,
+        'variancia'      => variancia_da_serie($serie, $amostral),
+        'desvio'         => desvio_padrao_da_serie($serie, $amostral),
+        'coeficiente'    => coeficiente_de_variacao($serie, $amostral),
+        'erro_padrao'    => erro_padrao_da_media($serie, $amostral),
+        'q1'             => $q1,
+        'q2'             => percentil_da_serie($serie, 0.5),
+        'q3'             => $q3,
+        'iqr'            => ($q1 === null || $q3 === null) ? null : $q3 - $q1,
+    ];
+}

@@ -70,6 +70,10 @@ if (!array_key_exists($coluna, COLUNAS_NUMERICAS)) {
 $filtros  = filtros_do_papel($entrada);
 $digitado = (string) ($entrada['valores'] ?? '');
 
+// Amostral (n-1) é o padrão: os atendimentos anotados pelo garçom são uma
+// amostra do salão, não o salão inteiro.
+$amostral = ((string) ($entrada['base_calculo'] ?? 'amostral')) !== 'populacional';
+
 $serie     = [];
 $formato   = 'numero';
 $origem    = '';
@@ -97,6 +101,7 @@ try {
 }
 
 $medidas   = $erro === null ? medidas_de_posicao($serie) : null;
+$dispersao = $erro === null ? medidas_de_dispersao($serie, $amostral) : null;
 $descricao = $fonte === 'base' ? descrever_filtros($filtros) : [];
 
 $camposCategoria = pode('ver_dados') ? ['sex', 'smoker', 'day', 'time'] : ['day', 'time'];
@@ -109,8 +114,8 @@ require __DIR__ . '/includes/topo.php';
 
 <p class="intro">
     Escolha de onde vêm os números — uma coluna da base, do jeito que os filtros
-    a recortarem, ou uma lista digitada por você — e o painel calcula em cima
-    exatamente daquela série.
+    a recortarem, ou uma lista digitada por você — e o painel calcula média,
+    desvio padrão e o resto em cima exatamente daquela série.
 </p>
 
 <?php if ($avisoCsrf): ?>
@@ -204,6 +209,28 @@ require __DIR__ . '/includes/topo.php';
         </div>
     </fieldset>
 
+    <fieldset class="base-calculo">
+        <legend>Para variância e desvio padrão, a série é</legend>
+
+        <label>
+            <input type="radio" name="base_calculo" value="amostral"
+                   <?= $amostral ? 'checked' : '' ?>>
+            <span>
+                <strong>uma amostra</strong>
+                <small>divide por n−1 · o caso dos atendimentos anotados pelo garçom</small>
+            </span>
+        </label>
+
+        <label>
+            <input type="radio" name="base_calculo" value="populacional"
+                   <?= $amostral ? '' : 'checked' ?>>
+            <span>
+                <strong>a população inteira</strong>
+                <small>divide por n · quando não existe nada fora da série</small>
+            </span>
+        </label>
+    </fieldset>
+
     <button type="submit" class="botao">Calcular</button>
 </form>
 
@@ -234,15 +261,32 @@ require __DIR__ . '/includes/topo.php';
         </p>
     <?php endif; ?>
 
-    <section class="medida-destaque" aria-label="Média">
-        <p class="medida-rotulo">Média</p>
-        <p class="medida-valor"><?= h(formatar_medida($medidas['media'], $formato)) ?></p>
-        <p class="medida-legenda">
-            soma de <?= h(formatar_medida($medidas['soma'], $formato)) ?>
-            dividida por <?= (int) $medidas['contagem'] ?>
-            <?= $medidas['contagem'] === 1 ? 'valor' : 'valores' ?>
-        </p>
-    </section>
+    <div class="medidas-destaque">
+        <section class="medida-destaque" aria-label="Média">
+            <p class="medida-rotulo">Média</p>
+            <p class="medida-valor"><?= h(formatar_medida($medidas['media'], $formato)) ?></p>
+            <p class="medida-legenda">
+                soma de <?= h(formatar_medida($medidas['soma'], $formato)) ?>
+                dividida por <?= (int) $medidas['contagem'] ?>
+                <?= $medidas['contagem'] === 1 ? 'valor' : 'valores' ?>
+            </p>
+        </section>
+
+        <section class="medida-destaque medida-secundaria" aria-label="Desvio padrão">
+            <p class="medida-rotulo">Desvio padrão</p>
+            <p class="medida-valor"><?= h(formatar_medida($dispersao['desvio'], $formato)) ?></p>
+            <p class="medida-legenda">
+                <?php if ($dispersao['desvio'] === null): ?>
+                    um valor só não tem dispersão amostral para medir
+                <?php else: ?>
+                    <?= $amostral ? 'amostral (n−1)' : 'populacional (n)' ?>
+                    <?php if ($dispersao['coeficiente'] !== null): ?>
+                        · <?= h(number_format($dispersao['coeficiente'], 1, ',', '.')) ?>% da média
+                    <?php endif; ?>
+                <?php endif; ?>
+            </p>
+        </section>
+    </div>
 
     <p class="contagem">
         Calculado sobre <strong><?= h($origem) ?></strong>.
@@ -281,6 +325,98 @@ require __DIR__ . '/includes/topo.php';
         <div><dt>Maior</dt><dd><?= h(formatar_medida($medidas['maximo'], $formato)) ?></dd></div>
         <div><dt>Amplitude</dt><dd><?= h(formatar_medida($medidas['amplitude'], $formato)) ?></dd></div>
     </dl>
+
+    <h2>Dispersão: o quanto os valores se espalham</h2>
+
+    <?php if ($dispersao['desvio'] === null): ?>
+
+        <p class="aviso aviso-aviso">
+            Com um valor só não dá para medir dispersão amostral — a conta dividiria
+            por n−1, que aqui é zero. Escolha <em>população inteira</em> acima, ou
+            acrescente valores à série.
+        </p>
+
+    <?php else: ?>
+
+        <dl class="resumo">
+            <div>
+                <dt>Desvio padrão</dt>
+                <dd><?= h(formatar_medida($dispersao['desvio'], $formato)) ?></dd>
+            </div>
+            <div>
+                <dt>Variância</dt>
+                <dd><?= h(number_format((float) $dispersao['variancia'], 4, ',', '.')) ?></dd>
+            </div>
+            <div>
+                <dt>Coeficiente de variação</dt>
+                <dd>
+                    <?= $dispersao['coeficiente'] === null
+                        ? '—'
+                        : h(number_format($dispersao['coeficiente'], 2, ',', '.')) . '%' ?>
+                </dd>
+            </div>
+            <div>
+                <dt>Erro padrão da média</dt>
+                <dd><?= h(formatar_medida($dispersao['erro_padrao'], $formato)) ?></dd>
+            </div>
+            <div>
+                <dt>1º quartil (25%)</dt>
+                <dd><?= h(formatar_medida($dispersao['q1'], $formato)) ?></dd>
+            </div>
+            <div>
+                <dt>3º quartil (75%)</dt>
+                <dd><?= h(formatar_medida($dispersao['q3'], $formato)) ?></dd>
+            </div>
+            <div>
+                <dt>Intervalo interquartil</dt>
+                <dd><?= h(formatar_medida($dispersao['iqr'], $formato)) ?></dd>
+            </div>
+        </dl>
+
+        <h2>A conta, passo a passo</h2>
+
+        <div class="conta-passos">
+            <p class="conta-formula">
+                s = &radic;( &Sigma;(x&#7522; &minus; x&#772;)&sup2; &divide; <?= $amostral ? 'n &minus; 1' : 'n' ?> )
+            </p>
+
+            <ol class="conta-lista">
+                <li>
+                    <span class="conta-rotulo">A média da série (x&#772;)</span>
+                    <span class="conta-valor"><?= h(number_format((float) $dispersao['media'], 4, ',', '.')) ?></span>
+                </li>
+                <li>
+                    <span class="conta-rotulo">
+                        Cada valor menos a média, elevado ao quadrado, tudo somado
+                        (&Sigma;(x&#7522; &minus; x&#772;)&sup2;)
+                    </span>
+                    <span class="conta-valor"><?= h(number_format((float) $dispersao['soma_quadrados'], 4, ',', '.')) ?></span>
+                </li>
+                <li>
+                    <span class="conta-rotulo">
+                        Dividido por <?= $amostral ? 'n &minus; 1' : 'n' ?> =
+                        <?= (int) $dispersao['divisor'] ?> &rarr; a variância
+                    </span>
+                    <span class="conta-valor"><?= h(number_format((float) $dispersao['variancia'], 4, ',', '.')) ?></span>
+                </li>
+                <li>
+                    <span class="conta-rotulo">Raiz quadrada da variância &rarr; o desvio padrão</span>
+                    <span class="conta-valor forte"><?= h(number_format((float) $dispersao['desvio'], 4, ',', '.')) ?></span>
+                </li>
+            </ol>
+        </div>
+
+        <p class="nota">
+            A variância sai em unidade ao quadrado — reais ao quadrado não
+            significam nada no salão. É por isso que se tira a raiz: o desvio
+            padrão volta para a mesma unidade dos valores e pode ser comparado
+            com a média. Com <?= $amostral ? 'n&minus;1' : 'n' ?> no divisor,
+            <?= $amostral
+                ? 'a conta assume que a série é uma amostra e corrige a tendência de subestimar a dispersão real.'
+                : 'a conta assume que não existe nenhum atendimento fora desta série.' ?>
+        </p>
+
+    <?php endif; ?>
 
     <?php if ($fonte === 'digitados' || pode('ver_dados')): ?>
         <details class="serie">
