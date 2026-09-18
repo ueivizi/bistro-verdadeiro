@@ -45,7 +45,7 @@ require __DIR__ . '/includes/topo.php';
 
 <h1><?= h(OPERACOES[$operacao]) ?></h1>
 
-<form class="filtros" method="get" action="gorjetas.php">
+<form class="filtros" method="get" action="gorjetas.php" data-vivo>
     <div>
         <label for="op">Análise</label>
         <select name="op" id="op">

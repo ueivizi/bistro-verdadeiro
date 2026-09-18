@@ -63,7 +63,7 @@ require __DIR__ . '/includes/topo.php';
     <p class="aviso aviso-erro"><?= h($erro) ?></p>
 <?php else: ?>
 
-<form class="filtros filtros-grade" method="get" action="graficos.php">
+<form class="filtros filtros-grade" method="get" action="graficos.php" data-vivo>
     <div>
         <label for="categoria">Comparar por</label>
         <select name="categoria" id="categoria">

@@ -45,7 +45,7 @@ function cabecalho_ordenavel(string $coluna, string $rotulo, string $ordem,
     $url     = url_com('dados.php', $estado, ['ordem' => $coluna, 'sentido' => $proximo, 'p' => null]);
 
     return '<th scope="col" class="' . h($classe) . ($ativa ? ' ordenada' : '') . '">'
-         . '<a class="ordenavel" href="' . h($url) . '">' . h($rotulo) . $seta . '</a></th>';
+         . '<a class="ordenavel" data-vivo href="' . h($url) . '">' . h($rotulo) . $seta . '</a></th>';
 }
 
 $descricao = descrever_filtros($filtros);
@@ -66,7 +66,7 @@ require __DIR__ . '/includes/topo.php';
     <p class="aviso aviso-erro"><?= h($erro) ?></p>
 <?php else: ?>
 
-<form class="filtros filtros-grade" method="get" action="dados.php">
+<form class="filtros filtros-grade" method="get" action="dados.php" data-vivo>
     <input type="hidden" name="ordem" value="<?= h($ordem) ?>">
     <input type="hidden" name="sentido" value="<?= h($sentido) ?>">
 
@@ -185,7 +185,7 @@ require __DIR__ . '/includes/topo.php';
 <?php if ($fatia['paginas'] > 1): ?>
     <nav class="paginacao" aria-label="Páginas da tabela">
         <?php if ($fatia['pagina'] > 1): ?>
-            <a href="<?= h(url_com('dados.php', $estado, ['p' => $fatia['pagina'] - 1])) ?>">← Anterior</a>
+            <a data-vivo href="<?= h(url_com('dados.php', $estado, ['p' => $fatia['pagina'] - 1])) ?>">← Anterior</a>
         <?php else: ?>
             <span class="desligado">← Anterior</span>
         <?php endif; ?>
@@ -195,7 +195,7 @@ require __DIR__ . '/includes/topo.php';
         </span>
 
         <?php if ($fatia['pagina'] < $fatia['paginas']): ?>
-            <a href="<?= h(url_com('dados.php', $estado, ['p' => $fatia['pagina'] + 1])) ?>">Próxima →</a>
+            <a data-vivo href="<?= h(url_com('dados.php', $estado, ['p' => $fatia['pagina'] + 1])) ?>">Próxima →</a>
         <?php else: ?>
             <span class="desligado">Próxima →</span>
         <?php endif; ?>

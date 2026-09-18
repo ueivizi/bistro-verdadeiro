@@ -10,6 +10,9 @@ $titulo      = $titulo ?? NOME_SISTEMA;
 $paginaAtual = basename((string) ($_SERVER['SCRIPT_NAME'] ?? ''));
 $papel       = papel_atual();
 $analise     = (string) array_key_first(operacoes_permitidas());
+$soConteudo  = pedido_de_fragmento();
+
+if (!$soConteudo):
 ?>
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -19,6 +22,7 @@ $analise     = (string) array_key_first(operacoes_permitidas());
 <title><?= h($titulo) ?> · <?= h(NOME_SISTEMA) ?></title>
 <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
 <link rel="stylesheet" href="assets/estilo.css">
+<script src="assets/painel.js" defer></script>
 </head>
 <body>
 
@@ -67,10 +71,15 @@ $analise     = (string) array_key_first(operacoes_permitidas());
     </nav>
 </header>
 
+<p class="so-leitor" id="recado" role="status" aria-live="polite"></p>
+
 <main class="pagina">
+
+<?php endif; ?>
+
+<div id="conteudo" data-titulo="<?= h($titulo) ?>">
 
 <?php $avisoPendente = obter_aviso(); ?>
 <?php if ($avisoPendente !== null): ?>
     <p class="aviso aviso-<?= h($avisoPendente['tipo']) ?>"><?= h($avisoPendente['texto']) ?></p>
 <?php endif; ?>
-

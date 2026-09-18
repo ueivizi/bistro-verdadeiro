@@ -149,7 +149,8 @@ bistro-verdadeiro/
 │   ├── sessao.php         session_start seguro, CSRF, login, permissões
 │   ├── dados.php          forma da base, leitura, validação e filtros
 │   ├── estatistica.php    medidas estatísticas e leitura de números digitados
-│   ├── grafico.php        gráficos em SVG, gerados no PHP (sem JS, sem biblioteca)
+│   ├── grafico.php        gráficos em SVG, gerados no PHP (sem biblioteca)
+│   ├── fragmento.php      decide entre a página inteira e só o conteúdo
 │   ├── importacao.php     leitura e conferência do CSV enviado
 │   ├── tentativas.php     contador de tentativas de login, em arquivo
 │   ├── mineracao.php      ponte PHP -> shell script (com plano B em PHP)
@@ -161,6 +162,7 @@ bistro-verdadeiro/
 │   └── gorjetas.csv       base de 244 atendimentos
 ├── var/                   estado de execução: tentativas de login e base ativa
 └── assets/
+    ├── painel.js          troca o conteúdo sem recarregar a moldura
     ├── estilo.css
     └── logo.svg
 ```
@@ -184,6 +186,26 @@ ranking). `-j` devolve JSON em vez de texto.
 
 O arquivo precisa continuar com quebras de linha Unix (LF). Se for editado no
 Windows e salvo como CRLF, o bash falha com um erro de `\r`.
+
+## Filtro que não recarrega a página
+
+Cada página interna embrulha o seu conteúdo num `<div id="conteudo">`. Numa
+visita normal, `includes/topo.php` desenha a moldura inteira em volta dele;
+quando o pedido traz o cabeçalho `X-Fragmento: 1`, só esse div é devolvido.
+`assets/painel.js` intercepta os formulários e links marcados com `data-vivo`,
+busca o fragmento e troca no lugar — o cabeçalho, o menu e o rodapé não são
+refeitos, e a rolagem fica onde estava.
+
+Vale para os filtros da mineração, da tabela de dados, das análises e dos
+gráficos, mais a ordenação e a paginação. Os formulários do envio de dados
+ficam de fora de propósito: eles **mudam** a base, e para uma mudança o
+recarregamento com mensagem de confirmação é o comportamento certo.
+
+Nada disso é a única forma de fazer as coisas. Os formulários continuam sendo
+formulários com `method` e `action`: sem JavaScript, com um navegador antigo ou
+se a rede falhar no meio, o clique volta a ser uma navegação comum e a tela
+funciona igual. O JavaScript muda quanto HTML chega, nunca quem pode pedir o
+quê — as conferências de login e de papel rodam antes, iguais nos dois caminhos.
 
 ## A base ativa e o envio de dados
 

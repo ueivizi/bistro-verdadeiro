@@ -98,7 +98,7 @@ require __DIR__ . '/includes/topo.php';
     </p>
 <?php endif; ?>
 
-<form class="analise-forma" method="post" action="analises.php">
+<form class="analise-forma" method="post" action="analises.php" data-vivo>
     <?= campo_csrf() ?>
 
     <fieldset class="fontes">

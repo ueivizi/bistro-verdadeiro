@@ -1,3 +1,6 @@
+</div><!-- #conteudo -->
+
+<?php if (!pedido_de_fragmento()): ?>
 </main>
 
 <footer class="rodape">
@@ -10,3 +13,4 @@
 
 </body>
 </html>
+<?php endif; ?>
