@@ -1,0 +1,19 @@
+# O painel roda direto da pasta do repositório: dentro de htdocs existe apenas
+# uma junção apontando para cá. Isso faz o Apache enxergar também o que nunca
+# deveria sair pela web — o .git, o contador de tentativas em var/ e a própria
+# base em dados/. Nada disso é buscado por URL (as páginas leem tudo do disco),
+# então o acesso direto é negado aqui.
+
+Options -Indexes -ExecCGI -Includes
+
+# Qualquer caminho com componente oculto: .git/, .gitignore, .env, .vscode/
+RedirectMatch 404 "/\."
+
+# Arquivos de apoio que moram na raiz e não são páginas do sistema.
+<FilesMatch "\.(md|sh|csv|json|lock|ya?ml|ini|log|bak|old|sql|dist|example)$">
+    Require all denied
+</FilesMatch>
+
+<IfModule mod_autoindex.c>
+    IndexIgnore *
+</IfModule>

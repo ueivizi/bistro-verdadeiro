@@ -19,6 +19,7 @@ define('CAMINHO_BASE',     dirname(__DIR__));
 define('PASTA_DADOS',      CAMINHO_BASE . DIRECTORY_SEPARATOR . 'dados');
 define('PASTA_VAR',        CAMINHO_BASE . DIRECTORY_SEPARATOR . 'var');
 define('ARQUIVO_DADOS',    PASTA_DADOS  . DIRECTORY_SEPARATOR . 'gorjetas.csv');
+define('ARQUIVO_BASE_ATIVA', PASTA_VAR   . DIRECTORY_SEPARATOR . 'gorjetas-ativa.csv');
 define('SCRIPT_MINERACAO', CAMINHO_BASE . DIRECTORY_SEPARATOR . 'scripts'
                                         . DIRECTORY_SEPARATOR . 'mineracao.sh');
 
@@ -41,6 +42,7 @@ const PAPEIS = [
         'resumo'       => 'Acesso completo: todas as análises, a base bruta e a saída do shell script.',
         'operacoes'    => ['maior', 'percentual', 'ranking', 'dia', 'resumo'],
         'ver_base'     => true,
+        'ver_dados'    => true,
         'ver_terminal' => true,
     ],
     'consulta' => [
@@ -48,6 +50,7 @@ const PAPEIS = [
         'resumo'       => 'Somente os números agregados do salão. Não vê mesas individuais nem a base bruta.',
         'operacoes'    => ['dia', 'resumo'],
         'ver_base'     => false,
+        'ver_dados'    => false,
         'ver_terminal' => false,
     ],
 ];
@@ -62,6 +65,8 @@ const OPERACOES = [
 
 const DIAS_VALIDOS     = ['Thur', 'Fri', 'Sat', 'Sun'];
 const PERIODOS_VALIDOS = ['Lunch', 'Dinner'];
+const SEXOS_VALIDOS    = ['Male', 'Female'];
+const FUMANTES_VALIDOS = ['Yes', 'No'];
 
 const TRADUCAO = [
     'Thur'   => 'Quinta',
@@ -75,3 +80,109 @@ const TRADUCAO = [
     'Yes'    => 'Sim',
     'No'     => 'Não',
 ];
+
+// ---------------------------------------------------------------------------
+// Forma da base
+// ---------------------------------------------------------------------------
+// Esta é a única descrição do que é um atendimento válido. Toda entrada de
+// dado — a leitura do CSV, os filtros da tela, o que chegar por upload — é
+// conferida contra ela antes de virar registro. Campo fora daqui não entra.
+//
+// 'sinonimos' existe só para aceitar planilha escrita em português: o valor
+// gravado é sempre o canônico da lista 'valores', nunca o que a pessoa enviou.
+
+const COLUNAS_BASE = [
+    'total_bill' => [
+        'rotulo'  => 'Conta',
+        'tipo'    => 'decimal',
+        'min'     => 0.01,
+        'max'     => 99999.99,
+        'ajuda'   => 'Valor total da conta da mesa.',
+    ],
+    'tip' => [
+        'rotulo'  => 'Gorjeta',
+        'tipo'    => 'decimal',
+        'min'     => 0.0,
+        'max'     => 99999.99,
+        'ajuda'   => 'Gorjeta deixada pelo cliente.',
+    ],
+    'sex' => [
+        'rotulo'    => 'Cliente',
+        'tipo'      => 'enum',
+        'valores'   => SEXOS_VALIDOS,
+        'sinonimos' => [
+            'm' => 'Male',   'masculino' => 'Male',   'homem'  => 'Male',
+            'f' => 'Female', 'feminino'  => 'Female', 'mulher' => 'Female',
+        ],
+        'ajuda'   => 'Sexo de quem pagou a conta.',
+    ],
+    'smoker' => [
+        'rotulo'    => 'Fumante',
+        'tipo'      => 'enum',
+        'valores'   => FUMANTES_VALIDOS,
+        'sinonimos' => [
+            's' => 'Yes', 'sim' => 'Yes', '1' => 'Yes', 'true'  => 'Yes',
+            'n' => 'No',  'nao' => 'No',  'não' => 'No', '0' => 'No', 'false' => 'No',
+        ],
+        'ajuda'   => 'Havia fumante na mesa.',
+    ],
+    'day' => [
+        'rotulo'    => 'Dia',
+        'tipo'      => 'enum',
+        'valores'   => DIAS_VALIDOS,
+        'sinonimos' => [
+            'quinta'  => 'Thur', 'qui' => 'Thur', 'thu'     => 'Thur', 'thursday' => 'Thur',
+            'sexta'   => 'Fri',  'sex' => 'Fri',  'friday'  => 'Fri',
+            'sabado'  => 'Sat',  'sáb' => 'Sat',  'sab'     => 'Sat', 'saturday' => 'Sat',
+            'domingo' => 'Sun',  'dom' => 'Sun',  'sunday'  => 'Sun',
+        ],
+        'ajuda'   => 'Dia da semana do atendimento.',
+    ],
+    'time' => [
+        'rotulo'    => 'Período',
+        'tipo'      => 'enum',
+        'valores'   => PERIODOS_VALIDOS,
+        'sinonimos' => [
+            'almoco' => 'Lunch',  'almoço' => 'Lunch',
+            'jantar' => 'Dinner', 'janta'  => 'Dinner', 'noite' => 'Dinner',
+        ],
+        'ajuda'   => 'Almoço ou jantar.',
+    ],
+    'size' => [
+        'rotulo'  => 'Pessoas',
+        'tipo'    => 'inteiro',
+        'min'     => 1,
+        'max'     => 50,
+        'ajuda'   => 'Quantas pessoas estavam à mesa.',
+    ],
+];
+
+// Colunas numéricas que a tela de análises pode medir. As duas últimas não
+// existem no arquivo: saem de conta e gorjeta na hora da leitura.
+const COLUNAS_NUMERICAS = [
+    'tip'        => 'Gorjeta (R$)',
+    'total_bill' => 'Conta (R$)',
+    'percentual' => 'Gorjeta sobre a conta (%)',
+    'size'       => 'Pessoas à mesa',
+    'por_pessoa' => 'Gorjeta por pessoa (R$)',
+];
+
+// Colunas pelas quais a tabela pode ser ordenada.
+const ORDENACOES_VALIDAS = [
+    'n', 'total_bill', 'tip', 'percentual', 'por_pessoa', 'sex', 'smoker', 'day', 'time', 'size',
+];
+
+// Colunas numéricas que aceitam filtro por faixa (de / até).
+const FAIXAS_FILTRAVEIS = [
+    'total_bill' => 'Conta (R$)',
+    'tip'        => 'Gorjeta (R$)',
+    'percentual' => 'Proporção (%)',
+    'size'       => 'Pessoas à mesa',
+];
+
+const PAGINAS_VALIDAS = [25, 50, 100, 250];
+const LINHAS_POR_PAGINA_PADRAO = 50;
+
+// Teto de linhas que a base ativa aceita guardar. Impede que um arquivo
+// grande demais derrube a leitura por falta de memória.
+const MAX_REGISTROS_BASE = 20000;

@@ -74,6 +74,15 @@ require __DIR__ . '/includes/topo.php';
         </li>
     <?php endforeach; ?>
 
+    <?php if (pode('ver_dados')): ?>
+        <li>
+            <a href="dados.php">
+                <span class="opcao-titulo">Todos os atendimentos</span>
+                <span class="opcao-texto">A base inteira, com filtro por cliente, dia, período, mesa e faixa de valor.</span>
+            </a>
+        </li>
+    <?php endif; ?>
+
     <?php if (pode('ver_base')): ?>
         <li>
             <a href="base.php">

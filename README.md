@@ -31,19 +31,53 @@ Depois de instalar o Git Bash, acrescente `C:\Program Files\Git\bin` ao PATH do
 usuário. Programas já abertos não enxergam a mudança: feche e reabra o terminal
 (ou o XAMPP Control Panel) antes de testar.
 
-### Feito no XAMPP / WAMP / hospedagem com Apache
+### Rodando no XAMPP sem copiar nada
 
-Se forem testar, copiem a pasta `sistema-gorjetas` para dentro de `htdocs` (XAMPP) ou da raiz
-do site, e acessem pelo endereço correspondente
-(ex.: `http://localhost/sistema-gorjetas`).
-No Linux, dê permissão de execução ao script uma vez, se for preciso:
+Em vez de copiar a pasta para dentro de `htdocs` — o que faz o código do
+repositório e o código que roda ficarem fora de sincronia — crie uma **junção**
+(o atalho de pasta do Windows) apontando de `htdocs` para o clone. O Apache
+segue a junção e serve direto daqui.
+
+No `cmd` ou no PowerShell, **sem precisar de administrador**:
+
+```
+mklink /J "C:\xampp\htdocs\bistro-verdadeiro" "Z:\dev\bistro-verdadeiro"
+```
+
+Suba o Apache pelo XAMPP Control Panel (botão *Start* na linha do Apache) e
+abra `http://localhost/bistro-verdadeiro`. O que for editado no clone vale na
+hora, sem copiar nada de novo.
+
+Para desfazer, `rmdir "C:\xampp\htdocs\bistro-verdadeiro"` — apaga só o atalho,
+o clone fica intacto.
+
+Servir a raiz do repositório significa que o Apache enxerga também o `.git`, o
+`var/` e o `dados/`. Por isso existem os arquivos `.htaccess`: o da raiz devolve
+404 para qualquer caminho oculto (`/.git/...`) e nega os arquivos de apoio; cada
+pasta interna tem o seu, com `Require all denied`. Sem eles,
+`http://localhost/bistro-verdadeiro/.git/config` responderia com o conteúdo real
+e o histórico inteiro do código sairia pela web.
+
+### Sem XAMPP, direto pelo PHP
+
+```bash
+cd bistro-verdadeiro
+php -S localhost:8080
+```
+
+E abra `http://localhost:8080`. Serve para um teste rápido, mas o servidor
+embutido do PHP ignora `.htaccess` — não deixe ele exposto para fora da máquina.
+
+### Linux ou macOS
+
+Dê permissão de execução ao script uma vez, se for preciso:
 
 ```bash
 chmod +x scripts/mineracao.sh
 ```
 
-A pasta `var/` precisa ser gravável pelo servidor: é onde fica o contador de
-tentativas de login. Ela é criada sozinha na primeira tentativa.
+A pasta `var/` precisa ser gravável pelo servidor: é onde ficam o contador de
+tentativas de login e a cópia ativa da base. Ela é criada sozinha no primeiro uso.
 
 ## Login
 
@@ -80,17 +114,19 @@ que cada papel enxerga, edite `PAPEIS` em `config/config.php`.
 ## Estrutura
 
 ```
-sistema-gorjetas/
+bistro-verdadeiro/
 ├── index.php              tela de login
 ├── autenticar.php         confere usuário/senha e abre a sessão
 ├── menu.php               menu de opções (tela inicial após o login)
 ├── gorjetas.php           chama a mineração e mostra o resultado
 ├── base.php               explica as colunas do CSV e mostra uma amostra
+├── dados.php              a base inteira, com filtros, ordenação e paginação
 ├── sair.php               encerra a sessão
 ├── config/
 │   └── config.php         usuários, papéis, tempos de sessão, listas de permissão
 ├── includes/
 │   ├── sessao.php         session_start seguro, CSRF, login, permissões
+│   ├── dados.php          forma da base, leitura, validação e filtros
 │   ├── tentativas.php     contador de tentativas de login, em arquivo
 │   ├── mineracao.php      ponte PHP -> shell script (com plano B em PHP)
 │   ├── topo.php           cabeçalho HTML das páginas internas
@@ -99,7 +135,7 @@ sistema-gorjetas/
 │   └── mineracao.sh       mineração em shell (awk/sort) — o núcleo da atividade
 ├── dados/
 │   └── gorjetas.csv       base de 244 atendimentos
-├── var/                   contador de tentativas (criada em tempo de execução)
+├── var/                   estado de execução: tentativas de login e base ativa
 └── assets/
     ├── estilo.css
     └── logo.svg
