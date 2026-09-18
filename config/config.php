@@ -43,6 +43,7 @@ const PAPEIS = [
         'operacoes'    => ['maior', 'percentual', 'ranking', 'dia', 'resumo'],
         'ver_base'     => true,
         'ver_dados'    => true,
+        'ver_analises' => true,
         'ver_terminal' => true,
     ],
     'consulta' => [
@@ -51,6 +52,7 @@ const PAPEIS = [
         'operacoes'    => ['dia', 'resumo'],
         'ver_base'     => false,
         'ver_dados'    => false,
+        'ver_analises' => true,
         'ver_terminal' => false,
     ],
 ];
@@ -160,12 +162,15 @@ const COLUNAS_BASE = [
 // Colunas numéricas que a tela de análises pode medir. As duas últimas não
 // existem no arquivo: saem de conta e gorjeta na hora da leitura.
 const COLUNAS_NUMERICAS = [
-    'tip'        => 'Gorjeta (R$)',
-    'total_bill' => 'Conta (R$)',
-    'percentual' => 'Gorjeta sobre a conta (%)',
-    'size'       => 'Pessoas à mesa',
-    'por_pessoa' => 'Gorjeta por pessoa (R$)',
+    'tip'        => ['rotulo' => 'Gorjeta',                 'formato' => 'moeda'],
+    'total_bill' => ['rotulo' => 'Conta',                   'formato' => 'moeda'],
+    'percentual' => ['rotulo' => 'Gorjeta sobre a conta',   'formato' => 'porcento'],
+    'por_pessoa' => ['rotulo' => 'Gorjeta por pessoa',      'formato' => 'moeda'],
+    'size'       => ['rotulo' => 'Pessoas à mesa',          'formato' => 'numero'],
 ];
+
+// Teto de valores que a caixa de digitação aceita de uma vez.
+const MAX_VALORES_DIGITADOS = 5000;
 
 // Colunas pelas quais a tabela pode ser ordenada.
 const ORDENACOES_VALIDAS = [

@@ -121,12 +121,14 @@ bistro-verdadeiro/
 ├── gorjetas.php           chama a mineração e mostra o resultado
 ├── base.php               explica as colunas do CSV e mostra uma amostra
 ├── dados.php              a base inteira, com filtros, ordenação e paginação
+├── analises.php           medidas sobre a base filtrada ou sobre valores digitados
 ├── sair.php               encerra a sessão
 ├── config/
 │   └── config.php         usuários, papéis, tempos de sessão, listas de permissão
 ├── includes/
 │   ├── sessao.php         session_start seguro, CSRF, login, permissões
 │   ├── dados.php          forma da base, leitura, validação e filtros
+│   ├── estatistica.php    medidas estatísticas e leitura de números digitados
 │   ├── tentativas.php     contador de tentativas de login, em arquivo
 │   ├── mineracao.php      ponte PHP -> shell script (com plano B em PHP)
 │   ├── topo.php           cabeçalho HTML das páginas internas
