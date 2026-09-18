@@ -48,6 +48,12 @@ $formatos = [
 $formatarColuna = $formatos[COLUNAS_NUMERICAS[$coluna]['formato']];
 $formatarMoeda  = $formatos['moeda'];
 
+// Base dos links de recorte que saem das próprias barras.
+$estado = array_filter(
+    array_merge($filtros, ['categoria' => $categoria, 'coluna' => $coluna, 'faixas' => $faixas]),
+    static fn($v): bool => $v !== '' && $v !== null
+);
+
 $titulo = 'Gráficos';
 require __DIR__ . '/includes/topo.php';
 ?>
@@ -149,12 +155,35 @@ require __DIR__ . '/includes/topo.php';
 
         $itens[] = [
             'rotulo'  => traduzir((string) $valor),
+            'chave'   => (string) $valor,
             'valor'   => $media,
             'nota'    => $grupo['atendimentos'] . ' atendimento'
                        . ($grupo['atendimentos'] === 1 ? '' : 's'),
             'quantos' => $grupo['atendimentos'],
         ];
     }
+
+    /**
+     * Clicar numa barra recorta o salão por ela; clicar na barra que já está
+     * recortada desfaz o recorte. Um clique vai e volta pelo mesmo lugar.
+     */
+    $recortarPorCategoria = static function (array $item) use ($categoria, $filtros, $estado): string {
+        $jaFiltrado = ($filtros[$categoria] ?? '') === $item['chave'];
+
+        return url_com('graficos.php', $estado, [
+            $categoria => $jaFiltrado ? null : $item['chave'],
+        ]);
+    };
+
+    // A faixa do histograma só vira recorte se a coluna medida for filtrável.
+    $recortarPorFaixa = array_key_exists($coluna, FAIXAS_FILTRAVEIS)
+        ? static function (array $faixa) use ($coluna, $estado): string {
+            return url_com('graficos.php', $estado, [
+                $coluna . '_min' => round((float) $faixa['de'], 2),
+                $coluna . '_max' => round((float) $faixa['ate'], 2),
+            ]);
+        }
+        : null;
     ?>
 
     <h2><?= h(COLUNAS_NUMERICAS[$coluna]['rotulo']) ?> média por
@@ -165,11 +194,14 @@ require __DIR__ . '/includes/topo.php';
             $itens,
             COLUNAS_NUMERICAS[$coluna]['rotulo'] . ' média por '
                 . minusculo(COLUNAS_BASE[$categoria]['rotulo']),
-            $formatarColuna
+            $formatarColuna,
+            $recortarPorCategoria
         ) ?>
         <figcaption>
             Quantos atendimentos sustentam cada média vai escrito embaixo do nome.
             Média de poucas mesas balança muito; a barra não conta isso sozinha.
+            <strong>Clique numa barra</strong> para recortar o salão por ela, e
+            clique de novo para desfazer.
         </figcaption>
     </figure>
 
@@ -199,7 +231,8 @@ require __DIR__ . '/includes/topo.php';
         $serie,
         $faixas,
         'Distribuição de ' . minusculo(COLUNAS_NUMERICAS[$coluna]['rotulo']),
-        $formatarColuna
+        $formatarColuna,
+        $recortarPorFaixa
     ); ?>
 
     <h2>Como <?= h(minusculo(COLUNAS_NUMERICAS[$coluna]['rotulo'])) ?> se distribui</h2>
@@ -210,6 +243,9 @@ require __DIR__ . '/includes/topo.php';
             Cada barra é uma faixa de valor e a altura é quantos atendimentos
             caíram nela. É aqui que a cauda aparece: se a direita se estica fina
             e comprida, é ela que puxa a média para longe da mediana.
+            <?php if ($recortarPorFaixa !== null): ?>
+                <strong>Clique numa faixa</strong> para deixar só ela nos três gráficos.
+            <?php endif; ?>
         </figcaption>
     </figure>
 
@@ -238,7 +274,12 @@ require __DIR__ . '/includes/topo.php';
 
     <?php
     $pontos = array_map(
-        static fn(array $r): array => ['x' => $r['total_bill'], 'y' => $r['tip']],
+        static fn(array $r): array => [
+            'x'     => $r['total_bill'],
+            'y'     => $r['tip'],
+            'extra' => traduzir((string) $r['day']) . ', ' . minusculo(traduzir((string) $r['time']))
+                     . ', mesa de ' . $r['size'],
+        ],
         $selecionados
     );
 

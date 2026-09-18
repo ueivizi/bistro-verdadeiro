@@ -207,11 +207,20 @@
 
         var link = evento.target.closest('a[data-vivo]');
 
-        if (!link || link.target || link.hasAttribute('download')) {
+        if (!link || link.getAttribute('target') || link.hasAttribute('download')) {
             return;
         }
 
-        var url = link.href;
+        // Dentro de um SVG, link.href é um SVGAnimatedString, não texto — as
+        // barras dos gráficos são links de verdade, e sem isto elas viriam
+        // como "[object SVGAnimatedString]". Ler o atributo serve para os dois.
+        var destino = link.getAttribute('href');
+
+        if (!destino || destino.charAt(0) === '#') {
+            return;
+        }
+
+        var url = new URL(destino, window.location.href).href;
 
         if (!mesmaOrigem(url)) {
             return;

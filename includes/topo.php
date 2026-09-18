@@ -23,6 +23,9 @@ if (!$soConteudo):
 <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
 <link rel="stylesheet" href="assets/estilo.css">
 <script src="assets/painel.js" defer></script>
+<?php if ($paginaAtual === 'graficos.php'): ?>
+<script src="assets/graficos.js" defer></script>
+<?php endif; ?>
 </head>
 <body>
 

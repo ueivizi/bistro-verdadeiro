@@ -19,8 +19,13 @@ require_once __DIR__ . '/sessao.php';
  * é texto passa por h(); o que é coordenada é convertido para número antes de
  * entrar na string.
  *
- * Cada marca carrega um <title>, que é a dica de foco que o navegador mostra
- * sozinho ao passar o mouse, sem uma linha de script.
+ * Cada marca carrega aria-label, que dá o nome acessível sem disparar a dica
+ * nativa do navegador, e data-dica, que assets/graficos.js usa para desenhar a
+ * dica própria. A escolha entre <title> e aria-label é uma troca: <title>
+ * funciona sem JavaScript, mas aparece com atraso e apareceria junto da dica
+ * própria, duas caixas para a mesma informação. Quem não tem JavaScript
+ * continua com o rótulo direto em cada barra e a tabela equivalente embaixo de
+ * cada figura, que é onde o dado está por extenso de qualquer jeito.
  */
 
 const GRAFICO_LARGURA = 720;
@@ -35,6 +40,30 @@ const COR_TENDENCIA  = '#12332a';
 const COR_GRADE      = '#ddd9cb';
 const COR_TEXTO      = '#5c6660';
 const COR_SUPERFICIE = '#f5f2e8';
+
+/**
+ * Envolve uma forma com o que a torna interativa.
+ *
+ * Quando vem uma URL, a marca vira um link de verdade — <a> com href, que o
+ * SVG entende igual ao HTML. Sem JavaScript ele navega; com JavaScript o
+ * data-vivo faz a troca acontecer sem recarregar. É o mesmo clique nos dois
+ * casos, não dois caminhos diferentes.
+ *
+ * Ponto de dispersão passa $focavel = false: são centenas deles, e cada um
+ * virar uma parada de tabulação tornaria o teclado inútil na página.
+ */
+function marca_interativa(string $forma, string $dica, ?string $url = null, bool $focavel = true): string
+{
+    $rotulo = ' role="img" aria-label="' . h($dica) . '" data-dica="' . h($dica) . '"'
+            . ($focavel ? ' tabindex="0"' : ' aria-hidden="true"');
+
+    if ($url === null) {
+        return '<g class="marca"' . $rotulo . '>' . $forma . '</g>';
+    }
+
+    return '<a class="marca marca-ligada" data-vivo href="' . h($url) . '"' . $rotulo . '>'
+         . $forma . '</a>';
+}
 
 /** Passo de eixo que cai em número redondo: 1, 2, 2,5, 5 ou 10 vezes a escala. */
 function passo_agradavel(float $intervalo, int $alvo = 5): float
@@ -131,7 +160,8 @@ function texto_svg(float $x, float $y, string $conteudo, string $ancora = 'start
  * seria deixar a posição no ranking mandar na cor, e aí o gráfico muda de cara
  * quando o filtro muda, sem que os dados daquele item tenham mudado.
  */
-function grafico_barras(array $itens, string $titulo, callable $formatar): string
+function grafico_barras(array $itens, string $titulo, callable $formatar,
+                        ?callable $ligacao = null): string
 {
     if ($itens === []) {
         return '';
@@ -172,11 +202,16 @@ function grafico_barras(array $itens, string $titulo, callable $formatar): strin
         $svg .= texto_svg($esquerda - 12, $y + $corpo / 2 + 4, (string) $item['rotulo'], 'end', 13.5, '#1b2420');
 
         if ($comp > 0) {
-            $svg .= '<path d="' . caminho_barra_horizontal($esquerda, $y, $comp, $corpo)
-                  . '" fill="' . COR_BARRA . '"><title>'
-                  . h($item['rotulo'] . ': ' . $formatar($valor)
-                      . (($item['nota'] ?? '') !== '' ? ' · ' . $item['nota'] : ''))
-                  . '</title></path>';
+            $dica = $item['rotulo'] . ': ' . $formatar($valor)
+                  . (($item['nota'] ?? '') !== '' ? ' · ' . $item['nota'] : '');
+
+            $svg .= marca_interativa(
+                '<path class="marca-forma" d="'
+                    . caminho_barra_horizontal($esquerda, $y, $comp, $corpo)
+                    . '" fill="' . COR_BARRA . '"/>',
+                $dica,
+                $ligacao === null ? null : $ligacao($item)
+            );
         }
 
         $svg .= texto_svg($esquerda + $comp + 10, $y + $corpo / 2 + 4, $formatar($valor),
@@ -197,7 +232,8 @@ function grafico_barras(array $itens, string $titulo, callable $formatar): strin
  * porque a tabela equivalente da tela precisa exatamente das mesmas faixas —
  * duas contas separadas acabariam divergindo.
  */
-function grafico_histograma(array $valores, int $quantasFaixas, string $titulo, callable $formatar): array
+function grafico_histograma(array $valores, int $quantasFaixas, string $titulo,
+                            callable $formatar, ?callable $ligacao = null): array
 {
     $valores = array_values(array_filter($valores, 'is_finite'));
 
@@ -268,11 +304,16 @@ function grafico_histograma(array $valores, int $quantasFaixas, string $titulo, 
         $corpo       = max(1.0, $larguraFaixa - 2);
 
         if ($alturaBarra > 0) {
-            $svg .= '<path d="' . caminho_barra_vertical($x, $base, $corpo, $alturaBarra)
-                  . '" fill="' . COR_HISTOGRAMA . '"><title>'
-                  . h($formatar($faixa['de']) . ' a ' . $formatar($faixa['ate']) . ': '
-                     . $faixa['quantos'] . ($faixa['quantos'] === 1 ? ' valor' : ' valores'))
-                  . '</title></path>';
+            $dica = $formatar($faixa['de']) . ' a ' . $formatar($faixa['ate']) . ': '
+                  . $faixa['quantos'] . ($faixa['quantos'] === 1 ? ' atendimento' : ' atendimentos');
+
+            $svg .= marca_interativa(
+                '<path class="marca-forma" d="'
+                    . caminho_barra_vertical($x, $base, $corpo, $alturaBarra)
+                    . '" fill="' . COR_HISTOGRAMA . '"/>',
+                $dica,
+                $ligacao === null ? null : $ligacao($faixa)
+            );
         }
 
         // Rótulo em toda faixa vira borrão; um a cada dois se lê.
@@ -378,13 +419,20 @@ function grafico_dispersao(array $pontos, string $rotuloX, string $rotuloY,
 
     // Pontos antes da reta, para a reta ficar legível por cima da nuvem.
     foreach ($pontos as $ponto) {
-        $svg .= sprintf(
-            '<circle cx="%.2f" cy="%.2f" r="4.5" fill="%s" fill-opacity="0.42"'
-            . ' stroke="%s" stroke-width="1"><title>%s</title></circle>',
+        $forma = sprintf(
+            '<circle class="marca-forma" cx="%.2f" cy="%.2f" r="4.5" fill="%s"'
+            . ' fill-opacity="0.42" stroke="%s" stroke-width="1"/>',
             $paraX((float) $ponto['x']), $paraY((float) $ponto['y']),
-            COR_PONTO, COR_SUPERFICIE,
-            h($rotuloX . ': ' . $formatarX((float) $ponto['x']) . ' · '
-              . $rotuloY . ': ' . $formatarY((float) $ponto['y']))
+            COR_PONTO, COR_SUPERFICIE
+        );
+
+        $svg .= marca_interativa(
+            $forma,
+            $rotuloX . ': ' . $formatarX((float) $ponto['x']) . ' · '
+                . $rotuloY . ': ' . $formatarY((float) $ponto['y'])
+                . (($ponto['extra'] ?? '') !== '' ? ' · ' . $ponto['extra'] : ''),
+            null,
+            false
         );
     }
 

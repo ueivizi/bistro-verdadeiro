@@ -1171,3 +1171,44 @@ h3 {
 @media (prefers-reduced-motion: reduce) {
     #conteudo { transition: none; }
 }
+
+/* --- Marcas de gráfico e a dica de valor ---------------------------------- */
+
+.marca { cursor: default; }
+.marca-ligada { cursor: pointer; }
+
+.marca .marca-forma {
+    transition: fill-opacity 140ms ease, stroke-width 140ms ease;
+}
+
+.marca:hover .marca-forma,
+.marca:focus .marca-forma,
+.marca:focus-visible .marca-forma {
+    fill-opacity: 1;
+    stroke: var(--latao);
+    stroke-width: 2;
+}
+
+/* O anel de foco padrão desenha um retângulo em volta do SVG inteiro em alguns
+   navegadores; o contorno da própria marca diz melhor onde o foco está. */
+.marca:focus { outline: none; }
+
+.dica-grafico {
+    position: fixed;
+    z-index: 30;
+    max-width: 18rem;
+    padding: .45rem .7rem;
+    background: var(--verde-fundo);
+    color: #eef0ea;
+    border-radius: var(--raio);
+    box-shadow: var(--sombra-g);
+    font-size: .85rem;
+    line-height: 1.45;
+    pointer-events: none;
+}
+
+.dica-grafico[hidden] { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+    .marca .marca-forma { transition: none; }
+}
