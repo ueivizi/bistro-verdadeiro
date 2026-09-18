@@ -137,6 +137,15 @@ require __DIR__ . '/includes/topo.php';
 
 <?php if ($fatia['total'] > 0): ?>
 
+<?php if (pode('ver_analises')): ?>
+    <p class="atalho-analise">
+        <a class="botao-vazado" href="<?= h(url_com('analises.php', $filtros, ['fonte' => 'base', 'coluna' => 'tip'])) ?>">
+            Analisar esta seleção →
+        </a>
+        <span>Leva os mesmos <?= $descricao === [] ? 'critérios' : 'filtros' ?> para a aba de Análises.</span>
+    </p>
+<?php endif; ?>
+
 <div class="tabela-rolagem">
     <table class="tabela">
         <caption>Clique no título de uma coluna para ordenar por ela</caption>

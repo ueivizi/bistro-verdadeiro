@@ -74,6 +74,15 @@ require __DIR__ . '/includes/topo.php';
         </li>
     <?php endforeach; ?>
 
+    <?php if (pode('ver_analises')): ?>
+        <li>
+            <a href="analises.php">
+                <span class="opcao-titulo">Análises</span>
+                <span class="opcao-texto">Calcula as medidas sobre uma coluna da base filtrada ou sobre valores digitados.</span>
+            </a>
+        </li>
+    <?php endif; ?>
+
     <?php if (pode('ver_dados')): ?>
         <li>
             <a href="dados.php">
