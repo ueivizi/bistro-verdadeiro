@@ -984,3 +984,43 @@ a.ordenavel:hover { color: var(--latao); text-decoration: underline; }
 }
 
 .conta-valor.forte { color: var(--vinho); font-weight: 600; font-size: 1.15rem; }
+
+/* --- Gráficos ------------------------------------------------------------- */
+
+.figura {
+    margin: 1.2rem 0 0;
+    padding: 1.1rem 1.2rem 1rem;
+    background: var(--papel-quente);
+    border: 1px solid var(--linha);
+    border-radius: var(--raio-g);
+}
+
+/* O SVG sai com viewBox e sem largura fixa, então ele acompanha a coluna.
+   A fonte vem daqui porque dentro do SVG um <style> esbarraria na CSP. */
+.grafico {
+    display: block;
+    width: 100%;
+    height: auto;
+    font-family: var(--sistema);
+}
+
+.grafico text { font-variant-numeric: tabular-nums; }
+
+.figura figcaption {
+    margin-top: .9rem;
+    padding-top: .8rem;
+    border-top: 1px solid var(--linha);
+    color: var(--tinta-suave);
+    font-size: .88rem;
+    line-height: 1.5;
+}
+
+.tabela-equivalente { margin: .9rem 0 0; }
+
+.tabela-equivalente summary {
+    cursor: pointer;
+    color: var(--verde);
+    font-size: .92rem;
+}
+
+.tabela-equivalente .tabela { margin-top: .8rem; max-width: 34rem; }

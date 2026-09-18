@@ -51,6 +51,9 @@ $analise     = (string) array_key_first(operacoes_permitidas());
             <?php if (pode('ver_analises')): ?>
                 <a href="analises.php"<?= $paginaAtual === 'analises.php' ? ' aria-current="page"' : '' ?>>Análises</a>
             <?php endif; ?>
+            <?php if (pode('ver_graficos')): ?>
+                <a href="graficos.php"<?= $paginaAtual === 'graficos.php' ? ' aria-current="page"' : '' ?>>Gráficos</a>
+            <?php endif; ?>
             <?php if (pode('ver_dados')): ?>
                 <a href="dados.php"<?= $paginaAtual === 'dados.php' ? ' aria-current="page"' : '' ?>>Dados</a>
             <?php endif; ?>

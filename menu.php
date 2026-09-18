@@ -83,6 +83,15 @@ require __DIR__ . '/includes/topo.php';
         </li>
     <?php endif; ?>
 
+    <?php if (pode('ver_graficos')): ?>
+        <li>
+            <a href="graficos.php">
+                <span class="opcao-titulo">Gráficos</span>
+                <span class="opcao-texto">Comparativo por categoria, distribuição em faixas e a nuvem de conta contra gorjeta.</span>
+            </a>
+        </li>
+    <?php endif; ?>
+
     <?php if (pode('ver_dados')): ?>
         <li>
             <a href="dados.php">
