@@ -121,7 +121,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 redirecionar('upload.php');
         }
     } catch (Throwable $e) {
-        definir_aviso($e->getMessage(), 'erro');
+        definir_aviso(mensagem_para_usuario($e), 'erro');
         redirecionar('upload.php');
     }
 }
@@ -135,7 +135,7 @@ try {
     $total    = count(ler_base());
     $gravavel = base_e_gravavel();
 } catch (Throwable $e) {
-    $erroBase = $e->getMessage();
+    $erroBase = mensagem_para_usuario($e);
 }
 
 $titulo = 'Enviar dados';

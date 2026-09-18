@@ -26,7 +26,7 @@ try {
     $selecionados = ordenar_registros(filtrar_registros($todos, $filtros), $ordem, $sentido);
     $fatia        = paginar($selecionados, $pagina, $porPag);
 } catch (Throwable $e) {
-    $erro = $e->getMessage();
+    $erro = mensagem_para_usuario($e);
 }
 
 // Parâmetros que precisam sobreviver a qualquer link desta tela.

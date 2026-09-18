@@ -28,7 +28,7 @@ $falha      = null;
 try {
     $destaque = minerar(pode_operacao('maior') ? 'maior' : 'resumo')['dados'];
 } catch (Throwable $e) {
-    $falha = $e->getMessage();
+    $falha = mensagem_para_usuario($e);
 }
 
 $titulo = 'Início';

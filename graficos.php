@@ -36,7 +36,7 @@ $selecionados = [];
 try {
     $selecionados = filtrar_registros(ler_base(), $filtros);
 } catch (Throwable $e) {
-    $erro = $e->getMessage();
+    $erro = mensagem_para_usuario($e);
 }
 
 $formatos = [

@@ -36,7 +36,7 @@ try {
     $execucao  = minerar($operacao, $dia, $periodo, $limite);
     $resultado = $execucao['dados'];
 } catch (Throwable $e) {
-    $erro = $e->getMessage();
+    $erro = mensagem_para_usuario($e);
 }
 
 $titulo = OPERACOES[$operacao];
