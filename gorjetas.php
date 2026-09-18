@@ -219,17 +219,38 @@ require __DIR__ . '/includes/topo.php';
 
 <?php endif; ?>
 
+<?php if ($erro === null && $execucao['origem'] === 'php'): ?>
+    <p class="aviso aviso-aviso">
+        Este resultado foi calculado em PHP: o <code>scripts/mineracao.sh</code> não
+        pôde ser executado nesta máquina. Os números são os mesmos — o que falta é o
+        script, que é justamente a parte que a atividade pede.
+    </p>
+<?php endif; ?>
+
 <?php if ($erro === null && pode('ver_terminal')): ?>
-    <details class="terminal">
-        <summary>Ver a saída do shell script</summary>
+    <section class="terminal" aria-label="Saída do shell script">
+        <h2 class="terminal-titulo">
+            A saída do shell script
+            <span class="selo selo-<?= $execucao['origem'] === 'shell' ? 'ok' : 'aviso' ?>">
+                <?= $execucao['origem'] === 'shell' ? 'rodou no bash' : 'plano B em PHP' ?>
+            </span>
+        </h2>
 
         <?php if ($execucao['origem'] === 'shell'): ?>
-            <p class="terminal-nota">Comando executado pelo PHP:</p>
+            <p class="terminal-nota">O comando que o PHP executou:</p>
             <pre class="terminal-comando"><?= h($execucao['comando']) ?></pre>
+            <p class="terminal-nota">O que o <code>awk</code> e o <code>sort</code> devolveram:</p>
         <?php endif; ?>
 
         <pre class="terminal-saida"><?= h($execucao['bruto']) ?></pre>
-    </details>
+
+        <?php if ($execucao['origem'] === 'shell'): ?>
+            <p class="nota">
+                A tabela acima desta caixa é esta mesma saída, só que formatada. O PHP
+                não refaz a conta: ele pede o JSON do mesmo comando e desenha o que volta.
+            </p>
+        <?php endif; ?>
+    </section>
 <?php endif; ?>
 
 <?php require __DIR__ . '/includes/rodape.php'; ?>

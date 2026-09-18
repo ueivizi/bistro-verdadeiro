@@ -1115,3 +1115,30 @@ h3 {
     font-size: 1.12rem;
     margin: 2rem 0 .6rem;
 }
+
+/* --- Saída do shell, agora à mostra --------------------------------------- */
+
+.terminal-titulo {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .7rem;
+    margin: 0 0 .8rem;
+    font-size: 1.3rem;
+}
+
+.selo {
+    font-family: var(--sistema);
+    font-size: .72rem;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    padding: .18rem .6rem;
+    border-radius: 999px;
+    border: 1px solid;
+}
+
+.selo-ok    { color: var(--verde);  border-color: var(--verde);  background: rgba(18, 51, 42, .07); }
+.selo-aviso { color: var(--latao);  border-color: var(--latao);  background: rgba(169, 124, 38, .1); }
+
+.terminal-saida { margin-top: 0; }
+.terminal .nota { margin-top: 1rem; }
