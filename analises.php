@@ -71,7 +71,7 @@ try {
                       . (count($selecionados) === 1 ? 'atendimento' : 'atendimentos');
     }
 } catch (Throwable $e) {
-    $erro = $e->getMessage();
+    $erro = mensagem_para_usuario($e);
 }
 
 $medidas   = $erro === null ? medidas_de_posicao($serie) : null;

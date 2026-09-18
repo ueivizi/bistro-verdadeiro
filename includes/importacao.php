@@ -45,27 +45,27 @@ function erro_de_upload(int $codigo): ?string
 function receber_arquivo_enviado(mixed $arquivo): string
 {
     if (!is_array($arquivo) || !isset($arquivo['tmp_name'], $arquivo['error'])) {
-        throw new RuntimeException('Nenhum arquivo chegou ao servidor.');
+        throw new FalhaDeDominio('Nenhum arquivo chegou ao servidor.');
     }
 
     if (is_array($arquivo['tmp_name'])) {
-        throw new RuntimeException('Envie um arquivo de cada vez.');
+        throw new FalhaDeDominio('Envie um arquivo de cada vez.');
     }
 
     $falha = erro_de_upload((int) $arquivo['error']);
 
     if ($falha !== null) {
-        throw new RuntimeException($falha);
+        throw new FalhaDeDominio($falha);
     }
 
     $caminho = (string) $arquivo['tmp_name'];
 
     if (!is_uploaded_file($caminho)) {
-        throw new RuntimeException('O arquivo indicado não veio de um envio desta página.');
+        throw new FalhaDeDominio('O arquivo indicado não veio de um envio desta página.');
     }
 
     if ((int) ($arquivo['size'] ?? 0) > MAX_BYTES_UPLOAD || filesize($caminho) > MAX_BYTES_UPLOAD) {
-        throw new RuntimeException(
+        throw new FalhaDeDominio(
             'O arquivo passou de ' . round(MAX_BYTES_UPLOAD / 1024 / 1024, 1) . ' MB.'
         );
     }
@@ -85,11 +85,11 @@ function abrir_conteudo_normalizado(string $caminho): mixed
     $conteudo = @file_get_contents($caminho, false, null, 0, MAX_BYTES_UPLOAD + 1);
 
     if ($conteudo === false) {
-        throw new RuntimeException('Não foi possível ler o arquivo enviado.');
+        throw new FalhaDeDominio('Não foi possível ler o arquivo enviado.');
     }
 
     if (strlen($conteudo) > MAX_BYTES_UPLOAD) {
-        throw new RuntimeException(
+        throw new FalhaDeDominio(
             'O arquivo passou de ' . round(MAX_BYTES_UPLOAD / 1024 / 1024, 1) . ' MB.'
         );
     }
@@ -107,7 +107,7 @@ function abrir_conteudo_normalizado(string $caminho): mixed
     $fluxo = fopen('php://temp', 'r+');
 
     if ($fluxo === false) {
-        throw new RuntimeException('O servidor não conseguiu preparar a leitura do arquivo.');
+        throw new FalhaDeDominio('O servidor não conseguiu preparar a leitura do arquivo.');
     }
 
     fwrite($fluxo, $conteudo);

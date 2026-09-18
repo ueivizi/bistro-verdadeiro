@@ -26,7 +26,7 @@ function caminho_contido(string $arquivo, string $pasta, string $rotulo): string
 
     if ($real === false || $raiz === false
         || !str_starts_with($real, rtrim($raiz, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR)) {
-        throw new RuntimeException($rotulo . ' não foi encontrada onde deveria estar.');
+        throw new FalhaDeDominio($rotulo . ' não foi encontrada onde deveria estar.');
     }
 
     return $real;
@@ -208,7 +208,7 @@ function ler_base(?string $arquivo = null): array
     $handle   = @fopen($arquivo, 'r');
 
     if ($handle === false) {
-        throw new RuntimeException('Não foi possível abrir a base de dados.');
+        throw new FalhaDeDominio('Não foi possível abrir a base de dados.');
     }
 
     $registros = [];
@@ -515,7 +515,7 @@ function caminho_gravavel(): string
     caminho_da_base();
 
     if (!base_ativa_existe() || !is_writable(ARQUIVO_BASE_ATIVA)) {
-        throw new RuntimeException(
+        throw new FalhaDeDominio(
             'A base de trabalho em var/ não está gravável. '
             . 'Dê permissão de escrita na pasta var/ para o usuário do Apache.'
         );
@@ -566,12 +566,12 @@ function anexar_registros(array $registros): int
     $handle = @fopen($arquivo, 'c+');
 
     if ($handle === false) {
-        throw new RuntimeException('Não foi possível abrir a base para escrita.');
+        throw new FalhaDeDominio('Não foi possível abrir a base para escrita.');
     }
 
     if (!flock($handle, LOCK_EX)) {
         fclose($handle);
-        throw new RuntimeException('A base está em uso por outra requisição. Tente de novo.');
+        throw new FalhaDeDominio('A base está em uso por outra requisição. Tente de novo.');
     }
 
     $gravados = 0;
@@ -594,7 +594,7 @@ function anexar_registros(array $registros): int
             }
 
             if (fputcsv($handle, registro_para_linha($registro), ',', '"', '') === false) {
-                throw new RuntimeException(
+                throw new FalhaDeDominio(
                     'Falha ao gravar na base. Nada foi acrescentado além do que já entrou.'
                 );
             }
@@ -620,12 +620,12 @@ function substituir_base(array $registros): int
     $handle = @fopen($arquivo, 'c+');
 
     if ($handle === false) {
-        throw new RuntimeException('Não foi possível abrir a base para escrita.');
+        throw new FalhaDeDominio('Não foi possível abrir a base para escrita.');
     }
 
     if (!flock($handle, LOCK_EX)) {
         fclose($handle);
-        throw new RuntimeException('A base está em uso por outra requisição. Tente de novo.');
+        throw new FalhaDeDominio('A base está em uso por outra requisição. Tente de novo.');
     }
 
     $gravados = 0;
@@ -656,7 +656,7 @@ function restaurar_semente(): void
     guardar_copia_anterior();
 
     if (!@copy(caminho_da_semente(), ARQUIVO_BASE_ATIVA)) {
-        throw new RuntimeException('Não foi possível restaurar a base original.');
+        throw new FalhaDeDominio('Não foi possível restaurar a base original.');
     }
 }
 
@@ -671,7 +671,7 @@ function desfazer_ultima(): void
     caminho_gravavel();
 
     if (!existe_copia_anterior()) {
-        throw new RuntimeException('Não há um estado anterior guardado para voltar.');
+        throw new FalhaDeDominio('Não há um estado anterior guardado para voltar.');
     }
 
     $anterior = caminho_contido(ARQUIVO_BASE_ANTERIOR, PASTA_VAR, 'A cópia anterior');
@@ -679,7 +679,7 @@ function desfazer_ultima(): void
 
     if (!@copy(ARQUIVO_BASE_ATIVA, $atual) || !@copy($anterior, ARQUIVO_BASE_ATIVA)) {
         @unlink($atual);
-        throw new RuntimeException('Não foi possível voltar ao estado anterior.');
+        throw new FalhaDeDominio('Não foi possível voltar ao estado anterior.');
     }
 
     @rename($atual, ARQUIVO_BASE_ANTERIOR);

@@ -18,7 +18,7 @@ try {
     $total     = count($registros);
     $amostra   = array_slice($registros, 0, 8);
 } catch (Throwable $e) {
-    $erro = $e->getMessage();
+    $erro = mensagem_para_usuario($e);
 }
 
 $colunas = [
