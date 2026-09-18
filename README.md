@@ -163,6 +163,7 @@ bistro-verdadeiro/
 ├── var/                   estado de execução: tentativas de login e base ativa
 └── assets/
     ├── painel.js          troca o conteúdo sem recarregar a moldura
+    ├── graficos.js        dica de valor nas marcas dos gráficos
     ├── estilo.css
     └── logo.svg
 ```
@@ -206,6 +207,23 @@ formulários com `method` e `action`: sem JavaScript, com um navegador antigo ou
 se a rede falhar no meio, o clique volta a ser uma navegação comum e a tela
 funciona igual. O JavaScript muda quanto HTML chega, nunca quem pode pedir o
 quê — as conferências de login e de papel rodam antes, iguais nos dois caminhos.
+
+## Os gráficos
+
+Três figuras em SVG geradas no PHP, sem biblioteca: média por categoria em
+barras, distribuição em histograma e a nuvem de conta contra gorjeta com reta
+de mínimos quadrados.
+
+As barras são **links de verdade** — `<a href>` dentro do SVG. Clicar numa
+recorta o salão por ela, e clicar de novo desfaz; clicar numa faixa do
+histograma deixa só aquela faixa nos três gráficos. Sem JavaScript isso navega
+normalmente; com JavaScript a troca acontece sem recarregar.
+
+`assets/graficos.js` desenha a dica de valor ao passar o mouse e ao chegar pelo
+teclado. As barras têm `tabindex`; os pontos da nuvem, não — são centenas, e
+cada um virar uma parada de tabulação tornaria a página impossível de
+atravessar. Sem esse arquivo os gráficos continuam legíveis: cada barra traz o
+valor escrito ao lado e embaixo de cada figura há a tabela equivalente.
 
 ## A base ativa e o envio de dados
 
