@@ -101,6 +101,15 @@ require __DIR__ . '/includes/topo.php';
         </li>
     <?php endif; ?>
 
+    <?php if (pode('enviar_dados')): ?>
+        <li>
+            <a href="upload.php">
+                <span class="opcao-titulo">Enviar dados de vendas</span>
+                <span class="opcao-texto">Acrescenta um CSV à base, lança uma venda à mão ou devolve tudo ao original.</span>
+            </a>
+        </li>
+    <?php endif; ?>
+
     <?php if (pode('ver_base')): ?>
         <li>
             <a href="base.php">

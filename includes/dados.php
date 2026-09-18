@@ -500,3 +500,213 @@ function url_com(string $pagina, array $atuais, array $mudancas): string
         ? $pagina
         : $pagina . '?' . http_build_query($parametros);
 }
+
+// ---------------------------------------------------------------------------
+// Escrita
+// ---------------------------------------------------------------------------
+
+/**
+ * Escrever sempre acontece sobre var/gorjetas-ativa.csv, nunca sobre a semente
+ * em dados/. A semente é o ponto de retorno; se ela pudesse ser escrita, não
+ * seria ponto de retorno nenhum.
+ */
+function caminho_gravavel(): string
+{
+    caminho_da_base();
+
+    if (!base_ativa_existe() || !is_writable(ARQUIVO_BASE_ATIVA)) {
+        throw new RuntimeException(
+            'A base de trabalho em var/ não está gravável. '
+            . 'Dê permissão de escrita na pasta var/ para o usuário do Apache.'
+        );
+    }
+
+    return caminho_contido(ARQUIVO_BASE_ATIVA, PASTA_VAR, 'A base de trabalho');
+}
+
+function cabecalho_csv(): array
+{
+    return array_keys(COLUNAS_BASE);
+}
+
+/**
+ * Guarda a base atual em var/gorjetas-anterior.csv antes de uma operação que
+ * apaga linha. Não é backup de verdade — é o desfazer de um passo.
+ */
+function guardar_copia_anterior(): void
+{
+    if (base_ativa_existe()) {
+        @copy(ARQUIVO_BASE_ATIVA, ARQUIVO_BASE_ANTERIOR);
+    }
+}
+
+/**
+ * Acrescenta atendimentos ao fim da base, sob trava exclusiva.
+ *
+ * Os registros já chegam aqui validados por validar_registro(), e é essa
+ * garantia que torna a escrita segura: todo campo é número ou vem de uma lista
+ * fixa, então nenhum valor carrega vírgula, aspas ou quebra de linha para
+ * quebrar o CSV — nem sinal de igual na frente, que é o que faria uma planilha
+ * tratar a célula como fórmula ao abrir o arquivo.
+ *
+ * Devolve quantos entraram.
+ */
+function anexar_registros(array $registros): int
+{
+    if ($registros === []) {
+        return 0;
+    }
+
+    $arquivo = caminho_gravavel();
+
+    // 'c+' e não 'a': é preciso ler o arquivo para contar as linhas que já
+    // existem, e abrir um segundo handle para isso falharia — no Windows o
+    // flock exclusivo deste aqui recusa a outra leitura com "Permission
+    // denied", e a contagem voltaria zero, desligando o teto em silêncio.
+    $handle = @fopen($arquivo, 'c+');
+
+    if ($handle === false) {
+        throw new RuntimeException('Não foi possível abrir a base para escrita.');
+    }
+
+    if (!flock($handle, LOCK_EX)) {
+        fclose($handle);
+        throw new RuntimeException('A base está em uso por outra requisição. Tente de novo.');
+    }
+
+    $gravados = 0;
+
+    try {
+        // Contar de dentro da trava: fora dela, duas requisições simultâneas
+        // leriam o mesmo total e passariam juntas do teto.
+        rewind($handle);
+        [$existentes, $temCabecalho] = contar_no_fluxo($handle);
+
+        fseek($handle, 0, SEEK_END);
+
+        if (!$temCabecalho && $existentes === 0) {
+            fputcsv($handle, cabecalho_csv(), ',', '"', '');
+        }
+
+        foreach ($registros as $registro) {
+            if ($existentes + $gravados >= MAX_REGISTROS_BASE) {
+                break;
+            }
+
+            if (fputcsv($handle, registro_para_linha($registro), ',', '"', '') === false) {
+                throw new RuntimeException(
+                    'Falha ao gravar na base. Nada foi acrescentado além do que já entrou.'
+                );
+            }
+
+            $gravados++;
+        }
+
+        fflush($handle);
+    } finally {
+        flock($handle, LOCK_UN);
+        fclose($handle);
+    }
+
+    return $gravados;
+}
+
+/** Troca a base inteira pelos registros dados, guardando a anterior antes. */
+function substituir_base(array $registros): int
+{
+    $arquivo = caminho_gravavel();
+    guardar_copia_anterior();
+
+    $handle = @fopen($arquivo, 'c+');
+
+    if ($handle === false) {
+        throw new RuntimeException('Não foi possível abrir a base para escrita.');
+    }
+
+    if (!flock($handle, LOCK_EX)) {
+        fclose($handle);
+        throw new RuntimeException('A base está em uso por outra requisição. Tente de novo.');
+    }
+
+    $gravados = 0;
+
+    try {
+        ftruncate($handle, 0);
+        rewind($handle);
+        fputcsv($handle, cabecalho_csv(), ',', '"', '');
+
+        foreach (array_slice($registros, 0, MAX_REGISTROS_BASE) as $registro) {
+            fputcsv($handle, registro_para_linha($registro), ',', '"', '');
+            $gravados++;
+        }
+
+        fflush($handle);
+    } finally {
+        flock($handle, LOCK_UN);
+        fclose($handle);
+    }
+
+    return $gravados;
+}
+
+/** Devolve a base ao estado original do arquivo versionado. */
+function restaurar_semente(): void
+{
+    caminho_gravavel();
+    guardar_copia_anterior();
+
+    if (!@copy(caminho_da_semente(), ARQUIVO_BASE_ATIVA)) {
+        throw new RuntimeException('Não foi possível restaurar a base original.');
+    }
+}
+
+function existe_copia_anterior(): bool
+{
+    return is_file(ARQUIVO_BASE_ANTERIOR);
+}
+
+/** Desfaz a última substituição ou restauração. */
+function desfazer_ultima(): void
+{
+    caminho_gravavel();
+
+    if (!existe_copia_anterior()) {
+        throw new RuntimeException('Não há um estado anterior guardado para voltar.');
+    }
+
+    $anterior = caminho_contido(ARQUIVO_BASE_ANTERIOR, PASTA_VAR, 'A cópia anterior');
+    $atual    = ARQUIVO_BASE_ATIVA . '.trocando';
+
+    if (!@copy(ARQUIVO_BASE_ATIVA, $atual) || !@copy($anterior, ARQUIVO_BASE_ATIVA)) {
+        @unlink($atual);
+        throw new RuntimeException('Não foi possível voltar ao estado anterior.');
+    }
+
+    @rename($atual, ARQUIVO_BASE_ANTERIOR);
+}
+
+/**
+ * Conta linhas de dados lendo de um fluxo já aberto e já travado por quem
+ * chamou. Devolve [quantas, achouCabecalho].
+ */
+function contar_no_fluxo(mixed $handle): array
+{
+    $total        = 0;
+    $numero       = 0;
+    $temCabecalho = false;
+
+    while (($linha = fgetcsv($handle, 0, ',', '"', '')) !== false) {
+        $numero++;
+
+        if ($numero === 1 && !is_numeric(trim((string) ($linha[0] ?? '')))) {
+            $temCabecalho = true;
+            continue;
+        }
+
+        if (array_filter($linha, static fn($c): bool => trim((string) $c) !== '') !== []) {
+            $total++;
+        }
+    }
+
+    return [$total, $temCabecalho];
+}

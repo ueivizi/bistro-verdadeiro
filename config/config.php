@@ -20,6 +20,7 @@ define('PASTA_DADOS',      CAMINHO_BASE . DIRECTORY_SEPARATOR . 'dados');
 define('PASTA_VAR',        CAMINHO_BASE . DIRECTORY_SEPARATOR . 'var');
 define('ARQUIVO_DADOS',    PASTA_DADOS  . DIRECTORY_SEPARATOR . 'gorjetas.csv');
 define('ARQUIVO_BASE_ATIVA', PASTA_VAR   . DIRECTORY_SEPARATOR . 'gorjetas-ativa.csv');
+define('ARQUIVO_BASE_ANTERIOR', PASTA_VAR . DIRECTORY_SEPARATOR . 'gorjetas-anterior.csv');
 define('SCRIPT_MINERACAO', CAMINHO_BASE . DIRECTORY_SEPARATOR . 'scripts'
                                         . DIRECTORY_SEPARATOR . 'mineracao.sh');
 
@@ -45,6 +46,7 @@ const PAPEIS = [
         'ver_dados'    => true,
         'ver_analises' => true,
         'ver_graficos' => true,
+        'enviar_dados' => true,
         'ver_terminal' => true,
     ],
     'consulta' => [
@@ -55,6 +57,7 @@ const PAPEIS = [
         'ver_dados'    => false,
         'ver_analises' => true,
         'ver_graficos' => true,
+        'enviar_dados' => false,
         'ver_terminal' => false,
     ],
 ];
@@ -102,6 +105,7 @@ const COLUNAS_BASE = [
         'min'     => 0.01,
         'max'     => 99999.99,
         'ajuda'   => 'Valor total da conta da mesa.',
+        'cabecalhos' => ['total_bill', 'conta', 'valor', 'total', 'valor_conta', 'valor da conta'],
     ],
     'tip' => [
         'rotulo'  => 'Gorjeta',
@@ -109,6 +113,7 @@ const COLUNAS_BASE = [
         'min'     => 0.0,
         'max'     => 99999.99,
         'ajuda'   => 'Gorjeta deixada pelo cliente.',
+        'cabecalhos' => ['tip', 'gorjeta', 'caixinha'],
     ],
     'sex' => [
         'rotulo'    => 'Cliente',
@@ -119,6 +124,7 @@ const COLUNAS_BASE = [
             'f' => 'Female', 'feminino'  => 'Female', 'mulher' => 'Female',
         ],
         'ajuda'   => 'Sexo de quem pagou a conta.',
+        'cabecalhos' => ['sex', 'sexo', 'cliente', 'genero', 'gênero'],
     ],
     'smoker' => [
         'rotulo'    => 'Fumante',
@@ -129,6 +135,7 @@ const COLUNAS_BASE = [
             'n' => 'No',  'nao' => 'No',  'não' => 'No', '0' => 'No', 'false' => 'No',
         ],
         'ajuda'   => 'Havia fumante na mesa.',
+        'cabecalhos' => ['smoker', 'fumante', 'fumantes'],
     ],
     'day' => [
         'rotulo'    => 'Dia',
@@ -141,6 +148,7 @@ const COLUNAS_BASE = [
             'domingo' => 'Sun',  'dom' => 'Sun',  'sunday'  => 'Sun',
         ],
         'ajuda'   => 'Dia da semana do atendimento.',
+        'cabecalhos' => ['day', 'dia', 'dia_semana', 'dia da semana'],
     ],
     'time' => [
         'rotulo'    => 'Período',
@@ -151,6 +159,7 @@ const COLUNAS_BASE = [
             'jantar' => 'Dinner', 'janta'  => 'Dinner', 'noite' => 'Dinner',
         ],
         'ajuda'   => 'Almoço ou jantar.',
+        'cabecalhos' => ['time', 'periodo', 'período', 'turno', 'refeicao', 'refeição'],
     ],
     'size' => [
         'rotulo'  => 'Pessoas',
@@ -158,6 +167,7 @@ const COLUNAS_BASE = [
         'min'     => 1,
         'max'     => 50,
         'ajuda'   => 'Quantas pessoas estavam à mesa.',
+        'cabecalhos' => ['size', 'pessoas', 'tamanho', 'mesa', 'qtd_pessoas', 'pessoas à mesa'],
     ],
 ];
 
@@ -189,6 +199,13 @@ const FAIXAS_FILTRAVEIS = [
 
 const PAGINAS_VALIDAS = [25, 50, 100, 250];
 const LINHAS_POR_PAGINA_PADRAO = 50;
+
+// Limites do envio de arquivo. Conferidos no servidor, nunca só no formulário:
+// MAX_FILE_SIZE do HTML é sugestão ao navegador, não controle.
+const MAX_BYTES_UPLOAD  = 2 * 1024 * 1024;
+const MAX_LINHAS_UPLOAD = 5000;
+const MAX_ERROS_MOSTRADOS = 30;
+const MAX_PREVIA_LINHAS   = 25;
 
 // Teto de linhas que a base ativa aceita guardar. Impede que um arquivo
 // grande demais derrube a leitura por falta de memória.
