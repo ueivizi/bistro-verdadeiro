@@ -44,6 +44,7 @@ const PAPEIS = [
         'ver_base'     => true,
         'ver_dados'    => true,
         'ver_analises' => true,
+        'ver_graficos' => true,
         'ver_terminal' => true,
     ],
     'consulta' => [
@@ -53,6 +54,7 @@ const PAPEIS = [
         'ver_base'     => false,
         'ver_dados'    => false,
         'ver_analises' => true,
+        'ver_graficos' => true,
         'ver_terminal' => false,
     ],
 ];

@@ -21,32 +21,6 @@ if ($porPost && !validar_csrf($_POST['csrf'] ?? null)) {
     $avisoCsrf = true;
 }
 
-/**
- * Quem não pode ver mesa individual também não pode recortar a média por sexo
- * do cliente ou por fumante — senão bastaria pedir a média de um grupo de um
- * para descobrir a linha. A conferência fica aqui, colada na leitura, e não
- * só no formulário.
- */
-function filtros_do_papel(array $entrada): array
-{
-    $filtros = normalizar_filtros($entrada);
-
-    if (pode('ver_dados')) {
-        return $filtros;
-    }
-
-    foreach (['sex', 'smoker'] as $campo) {
-        $filtros[$campo] = '';
-    }
-
-    foreach (array_keys(FAIXAS_FILTRAVEIS) as $campo) {
-        $filtros[$campo . '_min'] = null;
-        $filtros[$campo . '_max'] = null;
-    }
-
-    return $filtros;
-}
-
 function formatar_medida(?float $valor, string $formato, int $casas = 2): string
 {
     if ($valor === null) {
