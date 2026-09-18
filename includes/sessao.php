@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 require_once dirname(__DIR__) . '/config/config.php';
 require_once __DIR__ . '/falha.php';
+require_once __DIR__ . '/fragmento.php';
 
 function iniciar_sessao_segura(): void
 {

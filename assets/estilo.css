@@ -1142,3 +1142,32 @@ h3 {
 
 .terminal-saida { margin-top: 0; }
 .terminal .nota { margin-top: 1rem; }
+
+/* --- Troca de conteúdo sem recarregar ------------------------------------- */
+
+/* Anúncio para leitor de tela: some da vista, não da árvore de acessibilidade. */
+.so-leitor {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+}
+
+#conteudo { transition: opacity 140ms ease; }
+
+#conteudo[aria-busy="true"] {
+    opacity: .5;
+    /* Enquanto o novo conteúdo não chega, o antigo continua na tela — mas
+       clicar nele pediria algo que já está sendo substituído. */
+    pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #conteudo { transition: none; }
+}
