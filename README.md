@@ -176,7 +176,7 @@ bistro-verdadeiro/
 │   ├── mineracao.sh       mineração em shell (awk/sort)
 │   └── analise_pandas.py  agrupamentos, describe, correlação e figuras em pandas
 ├── dados/
-│   └── gorjetas.csv       base de 244 atendimentos
+│   └── gorjetas.csv       base de 304 atendimentos
 ├── var/                   estado de execução: tentativas de login e base ativa
 └── assets/
     ├── painel.js          troca o conteúdo sem recarregar a moldura
@@ -199,7 +199,7 @@ cd sistema-gorjetas
 ```
 
 Operações (`-o`): `maior`, `percentual`, `ranking`, `dia`, `resumo`.
-Filtros: `-d` (Thur/Fri/Sat/Sun), `-p` (Lunch/Dinner), `-n` (linhas do
+Filtros: `-d` (Mon/Tue/Wed/Thur/Fri/Sat/Sun), `-p` (Lunch/Dinner), `-n` (linhas do
 ranking). `-j` devolve JSON em vez de texto.
 
 O arquivo precisa continuar com quebras de linha Unix (LF). Se for editado no
@@ -359,6 +359,15 @@ atravessar. Sem esse arquivo os gráficos continuam legíveis: cada barra traz o
 valor escrito ao lado e embaixo de cada figura há a tabela equivalente.
 
 ## A base ativa e o envio de dados
+
+São 304 atendimentos, em sete dias da semana. Os 244 primeiros são a base
+clássica de gorjetas, que só cobre de quinta a domingo. Os 60 últimos —
+segunda, terça e quarta — são **sintéticos**, acrescentados para o salão ter a
+semana inteira: a conta e o tamanho da mesa de cada um foram sorteados das
+próprias linhas reais, para a faixa de valores continuar a mesma, e o que muda
+de propósito é a gorjeta proporcional. A segunda-feira rende perto de 23% da
+conta contra uns 16% do resto da semana — é um padrão plantado, e é ele que as
+análises desta base revelam.
 
 `dados/gorjetas.csv` é a **semente**: versionada, e o sistema nunca escreve
 nela. Na primeira leitura ele copia esse arquivo para `var/gorjetas-ativa.csv`

@@ -76,6 +76,7 @@ NOMES_PADRONIZADOS = {
 
 # Mesma traducao que o PHP usa na tela, para os dois lados falarem igual.
 TRADUCAO = {
+    "Mon": "Segunda", "Tue": "Terça", "Wed": "Quarta",
     "Thur": "Quinta", "Fri": "Sexta", "Sat": "Sábado", "Sun": "Domingo",
     "Lunch": "Almoço", "Dinner": "Jantar",
     "Male": "Homem", "Female": "Mulher",

@@ -77,12 +77,17 @@ const OPERACOES = [
 // PATH. Preencha só se o bash desta máquina estiver fora do lugar de sempre.
 const CAMINHO_BASH = '';
 
-const DIAS_VALIDOS     = ['Thur', 'Fri', 'Sat', 'Sun'];
+// Em ordem de semana: esta lista é o que o filtro da tela oferece, nessa
+// ordem. 'Thur' é escrito assim porque é assim que vem na base original.
+const DIAS_VALIDOS     = ['Mon', 'Tue', 'Wed', 'Thur', 'Fri', 'Sat', 'Sun'];
 const PERIODOS_VALIDOS = ['Lunch', 'Dinner'];
 const SEXOS_VALIDOS    = ['Male', 'Female'];
 const FUMANTES_VALIDOS = ['Yes', 'No'];
 
 const TRADUCAO = [
+    'Mon'    => 'Segunda',
+    'Tue'    => 'Terça',
+    'Wed'    => 'Quarta',
     'Thur'   => 'Quinta',
     'Fri'    => 'Sexta',
     'Sat'    => 'Sábado',
@@ -149,6 +154,9 @@ const COLUNAS_BASE = [
         'tipo'      => 'enum',
         'valores'   => DIAS_VALIDOS,
         'sinonimos' => [
+            'segunda' => 'Mon',  'seg' => 'Mon',  'monday'  => 'Mon',
+            'terca'   => 'Tue',  'terça' => 'Tue', 'ter'    => 'Tue', 'tuesday' => 'Tue',
+            'quarta'  => 'Wed',  'qua' => 'Wed',  'wednesday' => 'Wed',
             'quinta'  => 'Thur', 'qui' => 'Thur', 'thu'     => 'Thur', 'thursday' => 'Thur',
             'sexta'   => 'Fri',  'sex' => 'Fri',  'friday'  => 'Fri',
             'sabado'  => 'Sat',  'sáb' => 'Sat',  'sab'     => 'Sat', 'saturday' => 'Sat',
