@@ -61,6 +61,9 @@ if (!$soConteudo):
             <?php if (pode('ver_graficos')): ?>
                 <a href="graficos.php"<?= $paginaAtual === 'graficos.php' ? ' aria-current="page"' : '' ?>>Gráficos</a>
             <?php endif; ?>
+            <?php if (pode('ver_pandas')): ?>
+                <a href="pandas.php"<?= $paginaAtual === 'pandas.php' ? ' aria-current="page"' : '' ?>>Pandas</a>
+            <?php endif; ?>
             <?php if (pode('ver_dados')): ?>
                 <a href="dados.php"<?= $paginaAtual === 'dados.php' ? ' aria-current="page"' : '' ?>>Dados</a>
             <?php endif; ?>

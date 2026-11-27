@@ -32,7 +32,7 @@ Operacoes (-o):
   dia         totais e medias por dia da semana
   resumo      estatisticas gerais da base filtrada
 
-Filtros:  -d Thur|Fri|Sat|Sun     -p Lunch|Dinner
+Filtros:  -d Mon|Tue|Wed|Thur|Fri|Sat|Sun     -p Lunch|Dinner
 Saida:    texto (padrao) ou JSON com -j
 AJUDA
 }

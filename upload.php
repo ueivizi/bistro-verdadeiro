@@ -107,7 +107,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             case 'restaurar':
                 restaurar_semente();
                 unset($_SESSION['previa']);
-                definir_aviso('A base voltou ao arquivo original de 244 atendimentos.', 'ok');
+                definir_aviso(
+                    'A base voltou ao arquivo original de '
+                    . count(ler_base()) . ' atendimentos.',
+                    'ok'
+                );
                 redirecionar('upload.php');
                 // no break
 
@@ -129,11 +133,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $previa    = $_SESSION['previa'] ?? null;
 $gravavel  = false;
 $total     = 0;
+$naSemente = null;
 $erroBase  = null;
 
 try {
-    $total    = count(ler_base());
-    $gravavel = base_e_gravavel();
+    $total     = count(ler_base());
+    $naSemente = count(ler_base(caminho_da_semente()));
+    $gravavel  = base_e_gravavel();
 } catch (Throwable $e) {
     $erroBase = mensagem_para_usuario($e);
 }
@@ -402,8 +408,13 @@ require __DIR__ . '/includes/topo.php';
 </div>
 
 <p class="nota">
-    <strong>Restaurar</strong> devolve a base aos 244 atendimentos do arquivo
-    versionado e joga fora o que foi acrescentado depois.
+    <strong>Restaurar</strong> devolve a base
+    <?php if ($naSemente !== null): ?>
+        aos <?= h((string) $naSemente) ?> atendimentos do arquivo versionado
+    <?php else: ?>
+        ao arquivo versionado
+    <?php endif; ?>
+    e joga fora o que foi acrescentado depois.
     <strong>Desfazer</strong> volta à cópia guardada antes da última substituição
     ou restauração — um passo, não um histórico.
 </p>

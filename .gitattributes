@@ -2,3 +2,7 @@
 # erro de '\r'. Trava a terminação em LF para o clone no Windows não quebrar.
 * text=auto
 *.sh text eol=lf
+
+# Mesmo motivo para o programa em Python: ele tem shebang, e um shebang
+# terminado em '\r' faz o kernel procurar um interpretador que não existe.
+*.py text eol=lf
