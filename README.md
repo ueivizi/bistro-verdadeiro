@@ -9,6 +9,16 @@ e formata o que volta. Quem lê o CSV, filtra e ordena é o shell, com `awk` e `
 A saída crua do script fica à mostra na própria tela, junto do comando que a
 gerou, para dar para conferir que a conta veio mesmo de lá.
 
+Do mesmo jeito, a aba **Pandas** não é calculada em PHP: ela chama o programa
+em `scripts/analise_pandas.py`, e quem agrupa, descreve e correlaciona é o
+pandas. As figuras dessa aba são desenhadas pelo matplotlib no servidor e
+entregues ao navegador como PNG. Se faltar Python na máquina, as duas telas
+caem num plano B em PHP que dá os mesmos números e avisa na tela.
+
+Para rodar tudo é preciso **PHP 8**, um **bash** (para a mineração) e
+**Python 3 com pandas e matplotlib** (para a aba Pandas). Nenhum dos três é
+obrigatório para o sistema subir — o que falta vira aviso, não erro.
+
 ### Linux ou macOS
 
 ```bash
@@ -116,13 +126,16 @@ php -r 'echo password_hash("suaSenhaNova", PASSWORD_BCRYPT), PHP_EOL;'
 O papel do usuário não é decorativo: ele é conferido no servidor, em toda
 requisição, e define o que a pessoa consegue abrir.
 
-**Gerente** — acesso completo. Vê as cinco análises, a página da base bruta e o
-painel com a saída do shell script.
+**Gerente** — acesso completo. Vê as cinco análises, a aba de pandas inteira, a
+página da base bruta e o painel com a saída do shell script e do programa em
+Python.
 
 **Consulta** — vê apenas os números agregados do salão: o comparativo por dia da
 semana e o resumo estatístico. Não vê mesas individuais (que trazem sexo do
 cliente e se havia fumante à mesa), não abre a base bruta e não vê a saída do
-shell, que expõe caminhos do servidor.
+shell nem a do Python, que expõem caminhos do servidor. Na aba de pandas ele
+agrupa por período, dia e tamanho de mesa, mas não por sexo nem por fumante, e
+o `head()` — que mostra linha por linha — não aparece para ele.
 
 A restrição não é só esconder link do menu: `gorjetas.php` recusa uma operação
 fora do papel mesmo se ela for digitada na URL, e `base.php` chama
@@ -141,6 +154,8 @@ bistro-verdadeiro/
 ├── dados.php              a base inteira, com filtros, ordenação e paginação
 ├── analises.php           medidas sobre a base filtrada ou sobre valores digitados
 ├── graficos.php           barras, histograma e dispersão sobre o mesmo recorte
+├── pandas.php             as análises em Python: groupby, describe e correlação
+├── figura.php             entrega a figura do matplotlib como imagem
 ├── upload.php             envio de CSV, lançamento manual e volta ao original
 ├── sair.php               encerra a sessão
 ├── config/
@@ -154,10 +169,12 @@ bistro-verdadeiro/
 │   ├── importacao.php     leitura e conferência do CSV enviado
 │   ├── tentativas.php     contador de tentativas de login, em arquivo
 │   ├── mineracao.php      ponte PHP -> shell script (com plano B em PHP)
+│   ├── pandas.php         ponte PHP -> programa em pandas (com plano B em PHP)
 │   ├── topo.php           cabeçalho HTML das páginas internas
 │   └── rodape.php         rodapé HTML
 ├── scripts/
-│   └── mineracao.sh       mineração em shell (awk/sort) — o núcleo da atividade
+│   ├── mineracao.sh       mineração em shell (awk/sort)
+│   └── analise_pandas.py  agrupamentos, describe, correlação e figuras em pandas
 ├── dados/
 │   └── gorjetas.csv       base de 244 atendimentos
 ├── var/                   estado de execução: tentativas de login e base ativa
@@ -187,6 +204,122 @@ ranking). `-j` devolve JSON em vez de texto.
 
 O arquivo precisa continuar com quebras de linha Unix (LF). Se for editado no
 Windows e salvo como CRLF, o bash falha com um erro de `\r`.
+
+## As análises em pandas
+
+A aba **Pandas** é o par em Python do shell script: o PHP não calcula nada
+dela. Ele chama `scripts/analise_pandas.py`, recebe JSON e formata. Quem lê o
+CSV, padroniza os nomes das colunas, agrupa, descreve e correlaciona é o
+pandas; quem desenha as figuras é o matplotlib.
+
+A tela traz, em ordem:
+
+- **Período × valor médio da conta** — o agrupamento que a atividade pede,
+  `df.groupby("periodo")["conta"].mean()`, com a diferença entre almoço e
+  jantar em reais e em porcento.
+- **Qualquer agrupamento, qualquer medida** — o mesmo `groupby` com as duas
+  colunas à escolha: agrupar por período, dia da semana, sexo do cliente,
+  fumante ou tamanho de mesa; medir conta, gorjeta, gorjeta sobre a conta,
+  gorjeta por pessoa ou pessoas à mesa. São 25 combinações, não uma.
+- **`describe()`** — contagem, média, desvio padrão, extremos e os três
+  quartis de cada coluna numérica, mais o `head()` das primeiras linhas.
+- **`corr()`** — a matriz de correlação entre as cinco grandezas numéricas,
+  os pares mais fortes e as maiores gorjetas da base.
+- **As figuras do matplotlib** — conta × gorjeta com reta de tendência,
+  pessoas à mesa × gorjeta, a média por grupo em barras e o mapa de
+  correlação.
+- **A saída crua** do programa, junto do comando que a gerou — a mesma coisa
+  que aparece rodando no terminal.
+
+### Instalação
+
+```bash
+python3 -m pip install pandas matplotlib
+```
+
+No Debian ou Ubuntu dá para usar os pacotes da distribuição:
+
+```bash
+sudo apt update
+sudo apt install python3-pandas python3-matplotlib
+```
+
+No Windows o python quase nunca está no PATH do Apache, mesmo estando no PATH
+do terminal. Por isso ele é procurado primeiro pelos caminhos de instalação —
+`%LOCALAPPDATA%\Programs\Python\Python3*`, `%LOCALAPPDATA%\Python\pythoncore-*`,
+`%ProgramFiles%\Python3*`, `C:\Python3*` — e só depois pelo PATH. Cada
+candidato só é aceito depois de importar o pandas de verdade: existir no disco
+não basta, e um python sem pandas é pior do que nenhum, porque responderia ao
+`--version` e falharia na primeira análise.
+
+Se o seu python estiver fora desses lugares, preencha `CAMINHO_PYTHON` em
+`config/config.php`.
+
+Se nenhum responder, a tela **não quebra**: os mesmos agrupamentos são
+refeitos em PHP e um selo avisa de onde vieram os números. O que se perde são
+as figuras, que só o matplotlib desenha. Os dois caminhos dão o mesmo
+resultado até o centavo — o desvio padrão é amostral (n−1) e os quartis usam
+interpolação linear nos dois lados, que é o que o pandas faz.
+
+### O programa sozinho
+
+Dá para rodar `analise_pandas.py` direto no terminal, sem o PHP:
+
+```bash
+python3 scripts/analise_pandas.py -a dados/gorjetas.csv -o periodo
+python3 scripts/analise_pandas.py -a dados/gorjetas.csv -o grupo -g dia_da_semana -m gorjeta
+python3 scripts/analise_pandas.py -a dados/gorjetas.csv -o correlacao -j
+python3 scripts/analise_pandas.py -a dados/gorjetas.csv -o tudo
+python3 scripts/analise_pandas.py -a dados/gorjetas.csv -f dispersao -s figura.png
+python3 scripts/analise_pandas.py -h
+```
+
+Operações (`-o`): `periodo`, `grupo`, `visao`, `correlacao`, `tudo`.
+Agrupamentos (`-g`): `periodo`, `dia_da_semana`, `genero`, `fumante`,
+`quantos_na_mesa`. Medidas (`-m`): `conta`, `gorjeta`, `percentual`,
+`por_pessoa`, `quantos_na_mesa`. Figuras (`-f`): `dispersao`, `pessoas`,
+`grupo`, `correlacao`, sempre acompanhadas de `-s arquivo.png`. `-j` devolve
+JSON, que é o que o PHP consome.
+
+### Gráfico na aula × gráfico na web
+
+Na aula o `plt.show()` abre uma janela, e foi por isso que a máquina Linux com
+interface gráfica entrou na história: um terminal puro não tem onde desenhar.
+No servidor não existe tela nenhuma, então o programa usa o backend **`Agg`**
+do matplotlib, que grava a figura direto num arquivo. Quem mostra é o
+navegador.
+
+O PNG nasce em `var/`, com nome sorteado por `random_bytes()` — nada do que
+veio da URL entra no nome do arquivo. O `figura.php` manda os bytes e apaga o
+arquivo na mesma requisição, então a figura nunca ganha endereço próprio:
+`var/` é negada pelo `.htaccess`, e o único caminho até ela passa pelo login e
+pela conferência de papel. Um PNG que sobre de uma requisição interrompida é
+varrido na chamada seguinte.
+
+### Por que não tem `sudo` aqui
+
+O jeito mais curto de chamar Python do PHP é
+`shell_exec("sudo python3 script.py $arquivo")`. Ele funciona e é um buraco:
+`$arquivo` entra na linha de comando sem escapar, então um ponto-e-vírgula
+vindo da URL vira um segundo comando — rodando como root.
+
+Aqui a chamada é montada argumento por argumento, cada um com
+`escapeshellarg()`, e operação, agrupamento, medida e figura saem de listas
+fixas em `config/config.php`, conferidas antes de virarem argumento. O
+`argparse` do Python confere de novo, com `choices`. E não há `sudo` nenhum: o
+script só precisa ler um CSV e escrever um PNG numa pasta que o servidor já
+pode escrever. Dar root a um processo que recebe argumento de fora é trocar
+uma falha de leitura por uma falha de máquina inteira.
+
+O Python é chamado com `-I`, que isola o interpretador: ele ignora o
+`PYTHONPATH` e não põe a pasta do script no caminho de import, então um
+arquivo chamado `json.py` largado ao lado do script não é carregado no lugar
+da biblioteca padrão.
+
+A saída volta como UTF-8 por decisão do próprio script
+(`sys.stdout.reconfigure`). Sem isso, no Windows o `print` sai no code page do
+console e o `json_decode()` do PHP recusa a resposta inteira — basta um acento
+para quebrar o JSON.
 
 ## Filtro que não recarrega a página
 
@@ -260,6 +393,10 @@ Só o papel **gerente** envia dados.
 - Toda saída passa por `htmlspecialchars()` antes de ir para o HTML.
 - A chamada ao shell usa lista de permissão para operação/filtros e
   `escapeshellarg()` em cada argumento, então nada vindo da URL vira comando.
+- A chamada ao Python segue a mesma regra, com a lista de permissão em
+  `config/config.php` e o `choices` do `argparse` conferindo de novo do outro
+  lado. Roda sem `sudo`, com `-I` para isolar o interpretador, e o PNG que ela
+  gera tem nome sorteado por `random_bytes()`, é servido uma vez e apagado.
 - O arquivo enviado é conferido com `is_uploaded_file()`, tem teto de tamanho e
   de linhas conferido no servidor, e nunca é escrito em disco.
 - A escrita na base acontece sob `flock()` exclusivo, e a contagem do teto é

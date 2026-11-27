@@ -46,6 +46,7 @@ const PAPEIS = [
         'ver_dados'    => true,
         'ver_analises' => true,
         'ver_graficos' => true,
+        'ver_pandas'   => true,
         'enviar_dados' => true,
         'ver_terminal' => true,
     ],
@@ -57,6 +58,7 @@ const PAPEIS = [
         'ver_dados'    => false,
         'ver_analises' => true,
         'ver_graficos' => true,
+        'ver_pandas'   => true,
         'enviar_dados' => false,
         'ver_terminal' => false,
     ],
@@ -215,3 +217,55 @@ const MAX_PREVIA_LINHAS   = 25;
 // Teto de linhas que a base ativa aceita guardar. Impede que um arquivo
 // grande demais derrube a leitura por falta de memória.
 const MAX_REGISTROS_BASE = 20000;
+
+// ---------------------------------------------------------------------------
+// Análise com pandas (Python)
+// ---------------------------------------------------------------------------
+// O par em Python do shell script: scripts/analise_pandas.py faz os
+// agrupamentos, o describe e a correlação, e o PHP só formata o que volta.
+// As três listas abaixo são a allowlist do que pode ser pedido pela URL —
+// nome fora delas não chega a virar argumento de comando.
+
+define('SCRIPT_PANDAS', CAMINHO_BASE . DIRECTORY_SEPARATOR . 'scripts'
+                                     . DIRECTORY_SEPARATOR . 'analise_pandas.py');
+
+// Caminho do python que roda o script. Vazio deixa o sistema procurar
+// sozinho, como já faz com o bash. Preencha só se o python desta máquina
+// estiver fora dos lugares de sempre.
+const CAMINHO_PYTHON = '';
+
+// 'coluna' é o nome equivalente na base do PHP, usado pelo plano B.
+const AGRUPAMENTOS_PANDAS = [
+    'periodo'         => ['rotulo' => 'Período (almoço/jantar)', 'coluna' => 'time',   'restrito' => false],
+    'dia_da_semana'   => ['rotulo' => 'Dia da semana',           'coluna' => 'day',    'restrito' => false],
+    'genero'          => ['rotulo' => 'Gênero de quem pagou',    'coluna' => 'sex',    'restrito' => true],
+    'fumante'         => ['rotulo' => 'Fumante à mesa',          'coluna' => 'smoker', 'restrito' => true],
+    'quantos_na_mesa' => ['rotulo' => 'Quantas pessoas à mesa',  'coluna' => 'size',   'restrito' => false],
+];
+
+const MEDIDAS_PANDAS = [
+    'conta'           => ['rotulo' => 'Valor da conta',        'coluna' => 'total_bill', 'formato' => 'moeda'],
+    'gorjeta'         => ['rotulo' => 'Valor da gorjeta',      'coluna' => 'tip',        'formato' => 'moeda'],
+    'percentual'      => ['rotulo' => 'Gorjeta sobre a conta', 'coluna' => 'percentual', 'formato' => 'porcento'],
+    'por_pessoa'      => ['rotulo' => 'Gorjeta por pessoa',    'coluna' => 'por_pessoa', 'formato' => 'moeda'],
+    'quantos_na_mesa' => ['rotulo' => 'Pessoas à mesa',        'coluna' => 'size',       'formato' => 'numero'],
+];
+
+const OPERACOES_PANDAS = [
+    'periodo'    => 'Período × valor médio da conta',
+    'grupo'      => 'Qualquer agrupamento × qualquer medida',
+    'visao'      => 'Primeiras linhas e estatísticas descritivas',
+    'correlacao' => 'Correlação entre as grandezas numéricas',
+    'tudo'       => 'Tudo de uma vez — é o que a tela pede',
+];
+
+const FIGURAS_PANDAS = [
+    'dispersao'  => ['rotulo' => 'Conta × gorjeta',        'restrito' => false],
+    'pessoas'    => ['rotulo' => 'Pessoas à mesa × gorjeta', 'restrito' => false],
+    'grupo'      => ['rotulo' => 'Média por grupo',        'restrito' => false],
+    'correlacao' => ['rotulo' => 'Mapa de correlação',     'restrito' => false],
+];
+
+// As colunas numéricas que entram no describe e na matriz de correlação,
+// na mesma ordem que o Python usa.
+const NUMERICAS_PANDAS = ['conta', 'gorjeta', 'percentual', 'por_pessoa', 'quantos_na_mesa'];

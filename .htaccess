@@ -10,7 +10,7 @@ Options -Indexes -ExecCGI -Includes
 RedirectMatch 404 "/\."
 
 # Arquivos de apoio que moram na raiz e não são páginas do sistema.
-<FilesMatch "\.(md|sh|csv|json|lock|ya?ml|ini|log|bak|old|sql|dist|example)$">
+<FilesMatch "\.(md|sh|py|csv|json|lock|ya?ml|ini|log|bak|old|sql|dist|example)$">
     Require all denied
 </FilesMatch>
 

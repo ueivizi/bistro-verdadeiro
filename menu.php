@@ -92,6 +92,15 @@ require __DIR__ . '/includes/topo.php';
         </li>
     <?php endif; ?>
 
+    <?php if (pode('ver_pandas')): ?>
+        <li>
+            <a href="pandas.php">
+                <span class="opcao-titulo">Análise com pandas</span>
+                <span class="opcao-texto">Agrupamentos, describe e correlação feitos por um programa em Python, com as figuras do matplotlib.</span>
+            </a>
+        </li>
+    <?php endif; ?>
+
     <?php if (pode('ver_dados')): ?>
         <li>
             <a href="dados.php">
