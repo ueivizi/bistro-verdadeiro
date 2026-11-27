@@ -23,10 +23,16 @@ function descricao_da_operacao(string $chave): string
 $papel      = papel_atual();
 $permitidas = operacoes_permitidas();
 $destaque   = null;
+$quantidade = null;
 $falha      = null;
 
 try {
     $destaque = minerar(pode_operacao('maior') ? 'maior' : 'resumo')['dados'];
+
+    // A base cresce pela tela de envio, então o número vem dela, não de um
+    // literal aqui dentro. Se a leitura falhar, a frase sai sem número: é
+    // melhor não dizer nada do que dizer um total que já não é verdade.
+    $quantidade = count(ler_base());
 } catch (Throwable $e) {
     $falha = mensagem_para_usuario($e);
 }
@@ -37,7 +43,12 @@ require __DIR__ . '/includes/topo.php';
 
 <h1>Olá, <?= h(explode(' ', (string) $_SESSION['nome'])[0]) ?>.</h1>
 <p class="intro">
-    O painel analisa os 244 atendimentos registrados pelo garçom do salão.
+    <?php if ($quantidade !== null): ?>
+        O painel analisa os <?= h((string) $quantidade) ?> atendimentos
+        registrados pelo garçom do salão.
+    <?php else: ?>
+        O painel analisa os atendimentos registrados pelo garçom do salão.
+    <?php endif; ?>
     Escolha o que você quer descobrir na base.
 </p>
 
